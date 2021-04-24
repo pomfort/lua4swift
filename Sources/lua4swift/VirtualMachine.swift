@@ -139,7 +139,7 @@ open class VirtualMachine {
     }
 
     open func createFunction(_ body: String) -> MaybeFunction {
-        if luaL_loadstring(vm, (body as NSString).utf8String) == LUA_OK {
+      if luaL_loadstring(vm, body.cString(using: .utf8)) == LUA_OK {
             return .value(popValue(-1) as! Function)
         }
         else {
@@ -171,7 +171,7 @@ open class VirtualMachine {
         let ptr = userdata!.bindMemory(to: T.self, capacity: 1)
         ptr.initialize(to: o) // creates a new legit reference to o
 
-        luaL_setmetatable(vm, (T.luaTypeName() as NSString).utf8String) // this requires ptr to be on the stack
+        luaL_setmetatable(vm, T.luaTypeName().cString(using: .utf8)) // this requires ptr to be on the stack
         return popValue(-1) as! Userdata // this pops ptr off stack
     }
     
@@ -261,7 +261,7 @@ open class VirtualMachine {
     }
     
     fileprivate func argError(_ expectedType: String, at argPosition: Int) {
-        luaL_typeerror(vm, Int32(argPosition), (expectedType as NSString).utf8String)
+        luaL_typeerror(vm, Int32(argPosition), expectedType.cString(using: .utf8))
     }
     
     open func createCustomType<T>(_ setup: (CustomType<T>) -> Void) -> CustomType<T> {
