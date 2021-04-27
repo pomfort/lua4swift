@@ -74,6 +74,8 @@ open class Arguments {
     
     open var integer: Int64 { return (values.remove(at: 0) as! Number).toInteger() }
     open var double: Double { return (values.remove(at: 0) as! Number).toDouble() }
+
+    open func removeValue(at index: Int) -> Value { return values.remove(at: index) }
     
     open func customType<T: CustomTypeInstance>() -> T { return (values.remove(at: 0) as! Userdata).toCustomType() }
     
