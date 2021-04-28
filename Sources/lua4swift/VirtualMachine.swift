@@ -45,36 +45,36 @@ public enum Kind {
 
 open class VirtualMachine {
     
-    internal let vm = luaL_newstate()
+    public let state = luaL_newstate()
 
     open var errorHandler: ErrorHandler? = { print("error: \($0)") }
     
     public init(openLibs: Bool = true) {
-        if openLibs { luaL_openlibs(vm) }
+        if openLibs { luaL_openlibs(state) }
     }
     
     deinit {
-        lua_close(vm)
+        lua_close(state)
     }
 
     public func preloadModules(_ modules: UnsafeMutablePointer<luaL_Reg>) {
-        lua_getglobal(vm, "package")
-        lua_getfield(vm, -1, "preload");
+        lua_getglobal(state, "package")
+        lua_getfield(state, -1, "preload");
 
         var module = modules.pointee
 
         while let name = module.name, let function = module.func {
-            lua_pushcclosure(vm, function, 0)
-            lua_setfield(vm, -2, name)
+            lua_pushcclosure(state, function, 0)
+            lua_setfield(state, -2, name)
 
             module = modules.advanced(by: 1).pointee
         }
 
-        lua_settop(vm, -(2)-1)
+        lua_settop(state, -(2)-1)
     }
 
     internal func kind(_ pos: Int) -> Kind {
-        switch lua_type(vm, Int32(pos)) {
+        switch lua_type(state, Int32(pos)) {
         case LUA_TSTRING: return .string
         case LUA_TNUMBER: return .number
         case LUA_TBOOLEAN: return .boolean
@@ -95,12 +95,12 @@ open class VirtualMachine {
         switch kind(-1) {
         case .string:
             var len: Int = 0
-            let str = lua_tolstring(vm, -1, &len)
+            let str = lua_tolstring(state, -1, &len)
             v = String(cString: str!)
         case .number:
             v = Number(self)
         case .boolean:
-            v = lua_toboolean(vm, -1) == 1 ? true : false
+            v = lua_toboolean(state, -1) == 1 ? true : false
         case .function:
             v = Function(self)
         case .table:
@@ -130,7 +130,7 @@ open class VirtualMachine {
     }
 
     open func createFunction(_ body: URL) -> MaybeFunction {
-        if luaL_loadfilex(vm, body.path, nil) == LUA_OK {
+        if luaL_loadfilex(state, body.path, nil) == LUA_OK {
             return .value(popValue(-1) as! Function)
         }
         else {
@@ -139,7 +139,7 @@ open class VirtualMachine {
     }
 
     open func createFunction(_ body: String) -> MaybeFunction {
-      if luaL_loadstring(vm, body.cString(using: .utf8)) == LUA_OK {
+      if luaL_loadstring(state, body.cString(using: .utf8)) == LUA_OK {
             return .value(popValue(-1) as! Function)
         }
         else {
@@ -148,7 +148,7 @@ open class VirtualMachine {
     }
     
     open func createTable(_ sequenceCapacity: Int = 0, keyCapacity: Int = 0) -> Table {
-        lua_createtable(vm, Int32(sequenceCapacity), Int32(keyCapacity))
+        lua_createtable(state, Int32(sequenceCapacity), Int32(keyCapacity))
         return popValue(-1) as! Table
     }
     
@@ -166,12 +166,12 @@ open class VirtualMachine {
     }
     
     open func createUserdata<T: CustomTypeInstance>(_ o: T) -> Userdata {
-        let userdata = lua_newuserdatauv(vm, MemoryLayout<T>.size, 1) // this both pushes ptr onto stack and returns it
+        let userdata = lua_newuserdatauv(state, MemoryLayout<T>.size, 1) // this both pushes ptr onto stack and returns it
 
         let ptr = userdata!.bindMemory(to: T.self, capacity: 1)
         ptr.initialize(to: o) // creates a new legit reference to o
 
-        luaL_setmetatable(vm, T.luaTypeName().cString(using: .utf8)) // this requires ptr to be on the stack
+        luaL_setmetatable(state, T.luaTypeName().cString(using: .utf8)) // this requires ptr to be on the stack
         return popValue(-1) as! Userdata // this pops ptr off stack
     }
     
@@ -248,7 +248,7 @@ open class VirtualMachine {
             case let .error(error):
                 print("pushing error: \(error)")
                 error.push(vm)
-                lua_error(vm.vm)
+                lua_error(vm.state)
                 return 0 // uhh, we don't actually get here
             }
         }
@@ -256,16 +256,16 @@ open class VirtualMachine {
         let imp = imp_implementationWithBlock(block)
         
         let fp = unsafeBitCast(imp, to: lua_CFunction.self)
-        lua_pushcclosure(vm, fp, 0)
+        lua_pushcclosure(state, fp, 0)
         return popValue(-1) as! Function
     }
     
     fileprivate func argError(_ expectedType: String, at argPosition: Int) {
-        luaL_typeerror(vm, Int32(argPosition), expectedType.cString(using: .utf8))
+        luaL_typeerror(state, Int32(argPosition), expectedType.cString(using: .utf8))
     }
     
     open func createCustomType<T>(_ setup: (CustomType<T>) -> Void) -> CustomType<T> {
-        lua_createtable(vm, 0, 0)
+        lua_createtable(state, 0, 0)
         let lib = CustomType<T>(self)
         pop()
         
@@ -305,21 +305,21 @@ open class VirtualMachine {
         remove(position)
     }
     
-    internal func ref(_ position: Int) -> Int { return Int(luaL_ref(vm, Int32(position))) }
-    internal func unref(_ table: Int, _ position: Int) { luaL_unref(vm, Int32(table), Int32(position)) }
-    internal func absolutePosition(_ position: Int) -> Int { return Int(lua_absindex(vm, Int32(position))) }
-    internal func rawGet(tablePosition: Int, index: Int) { lua_rawgeti(vm, Int32(tablePosition), lua_Integer(index)) }
+    internal func ref(_ position: Int) -> Int { return Int(luaL_ref(state, Int32(position))) }
+    internal func unref(_ table: Int, _ position: Int) { luaL_unref(state, Int32(table), Int32(position)) }
+    internal func absolutePosition(_ position: Int) -> Int { return Int(lua_absindex(state, Int32(position))) }
+    internal func rawGet(tablePosition: Int, index: Int) { lua_rawgeti(state, Int32(tablePosition), lua_Integer(index)) }
     
     internal func pushFromStack(_ position: Int) {
-        lua_pushvalue(vm, Int32(position))
+        lua_pushvalue(state, Int32(position))
     }
     
     internal func pop(_ n: Int = 1) {
-        lua_settop(vm, -Int32(n)-1)
+        lua_settop(state, -Int32(n)-1)
     }
     
     internal func rotate(_ position: Int, n: Int) {
-        lua_rotate(vm, Int32(position), Int32(n))
+        lua_rotate(state, Int32(position), Int32(n))
     }
     
     internal func remove(_ position: Int) {
@@ -328,7 +328,7 @@ open class VirtualMachine {
     }
     
     internal func stackSize() -> Int {
-        return Int(lua_gettop(vm))
+        return Int(lua_gettop(state))
     }
     
 }

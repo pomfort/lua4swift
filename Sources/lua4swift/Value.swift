@@ -36,11 +36,11 @@ open class StoredValue: Value, Equatable {
 }
 
 public func ==(lhs: StoredValue, rhs: StoredValue) -> Bool {
-    if lhs.vm.vm != rhs.vm.vm { return false }
+    if lhs.vm.state != rhs.vm.state { return false }
     
     lhs.push(lhs.vm)
     lhs.push(rhs.vm)
-    let result = lua_compare(lhs.vm.vm, -2, -1, LUA_OPEQ) == 1
+    let result = lua_compare(lhs.vm.state, -2, -1, LUA_OPEQ) == 1
     lhs.vm.pop(2)
     
     return result

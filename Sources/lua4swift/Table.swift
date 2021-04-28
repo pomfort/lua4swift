@@ -14,7 +14,7 @@ open class Table: StoredValue {
             push(vm)
             
             key.push(vm)
-            lua_gettable(vm.vm, -2)
+            lua_gettable(vm.state, -2)
             let v = vm.popValue(-1)
             
             vm.pop()
@@ -26,7 +26,7 @@ open class Table: StoredValue {
             
             key.push(vm)
             newValue.push(vm)
-            lua_settable(vm.vm, -3)
+            lua_settable(vm.state, -3)
             
             vm.pop()
         }
@@ -35,8 +35,8 @@ open class Table: StoredValue {
     open func keys() -> [Value] {
         var k = [Value]()
         push(vm) // table
-        lua_pushnil(vm.vm)
-        while lua_next(vm.vm, -2) != 0 {
+        lua_pushnil(vm.state)
+        while lua_next(vm.state, -2) != 0 {
             vm.pop() // val
             let key = vm.popValue(-1)!
             k.append(key)
@@ -49,7 +49,7 @@ open class Table: StoredValue {
     open func becomeMetatableFor(_ thing: Value) {
         thing.push(vm)
         self.push(vm)
-        lua_setmetatable(vm.vm, -2)
+        lua_setmetatable(vm.state, -2)
         vm.pop() // thing
     }
     

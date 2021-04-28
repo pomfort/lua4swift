@@ -5,7 +5,7 @@ open class Userdata: StoredValue {
     
     open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
         push(vm)
-        let ptr = lua_touserdata(vm.vm, -1)
+        let ptr = lua_touserdata(vm.state, -1)
         vm.pop()
         return (ptr?.assumingMemoryBound(to: T.self))!
     }
@@ -43,7 +43,7 @@ open class CustomType<T: CustomTypeInstance>: Table {
     
     override open class func arg(_ vm: VirtualMachine, value: Value) -> String? {
         value.push(vm)
-        let isLegit = luaL_testudata(vm.vm, -1, T.luaTypeName().cString(using: .utf8)) != nil
+        let isLegit = luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil
         vm.pop()
         if !isLegit { return T.luaTypeName() }
         return nil

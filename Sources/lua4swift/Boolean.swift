@@ -3,7 +3,7 @@ import CLua
 extension Bool: Value {
     
     public func push(_ vm: VirtualMachine) {
-        lua_pushboolean(vm.vm, self ? 1 : 0)
+        lua_pushboolean(vm.state, self ? 1 : 0)
     }
     
     public func kind() -> Kind { return .boolean }

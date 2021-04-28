@@ -19,7 +19,7 @@ open class Function: StoredValue {
             arg.push(vm)
         }
         
-        let result = lua_pcallk(vm.vm, Int32(args.count), LUA_MULTRET, Int32(originalStackTop + 1), 0, nil)
+        let result = lua_pcallk(vm.state, Int32(args.count), LUA_MULTRET, Int32(originalStackTop + 1), 0, nil)
         vm.remove(originalStackTop + 1)
         
         if result == LUA_OK {
