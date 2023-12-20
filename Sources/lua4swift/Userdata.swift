@@ -1,8 +1,7 @@
 import Foundation
 import CLua
 
-open class Userdata: StoredValue {
-    
+open class Userdata: Lua.StoredValue {
     open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
         push(vm)
         let ptr = lua_touserdata(vm.state, -1)
@@ -13,49 +12,44 @@ open class Userdata: StoredValue {
     open func toCustomType<T: CustomTypeInstance>() -> T {
         return userdataPointer().pointee
     }
-    
+
     open func toAny() -> Any {
         return userdataPointer().pointee
     }
-    
-    override open func kind() -> Kind { return .userdata }
-    
+
+    override open func kind() -> Lua.Kind { return .userdata }
+
 }
 
-open class LightUserdata: StoredValue {
-    
-    override open func kind() -> Kind { return .lightUserdata }
-    
-    override open class func arg(_ vm: VirtualMachine, value: Value) -> String? {
+open class LightUserdata: Lua.StoredValue {
+    override open func kind() -> Lua.Kind { return .lightUserdata }
+
+    override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValue) -> String? {
         if value.kind() != .lightUserdata { return "light userdata" }
         return nil
     }
-    
 }
 
 public protocol CustomTypeInstance {
-    
     static func luaTypeName() -> String
-    
 }
 
 open class CustomType<T: CustomTypeInstance>: Table {
-    
-    override open class func arg(_ vm: VirtualMachine, value: Value) -> String? {
+    override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValue) -> String? {
         value.push(vm)
         let isLegit = luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil
         vm.pop()
         if !isLegit { return T.luaTypeName() }
         return nil
     }
-    
-    override internal init(_ vm: VirtualMachine) {
+
+    override internal init(_ vm: Lua.VirtualMachine) {
         super.init(vm)
     }
-    
+
     open var gc: ((T) -> Void)?
     open var eq: ((T, T) -> Bool)?
-    
+
     public func createMethod(_ typeCheckers: [TypeChecker], _ fn: @escaping (T, Arguments) -> SwiftReturnValue) -> Function {
         var typeCheckers = typeCheckers
         typeCheckers.insert(CustomType<T>.arg, at: 0)
@@ -64,5 +58,5 @@ open class CustomType<T: CustomTypeInstance>: Table {
             return fn(o, args)
         }
     }
-    
+
 }
