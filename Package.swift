@@ -8,7 +8,7 @@ let package = Package(
   products: [
     .library(
       name: "lua4swift",
-      targets: ["lua4swift", "CLua"]),
+      targets: ["lua4swift"]),
   ],
   dependencies: [
   ],
