@@ -10,7 +10,7 @@ extension Lua {
     }
 
     open class Function: Lua.StoredValue {
-        open func call(_ args: [LuaValue]) throws -> [LuaValue] {
+        open func call(_ args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
             let debugTable = vm.globals["debug"] as! Table
             let messageHandler = debugTable["traceback"]
 
@@ -26,7 +26,7 @@ extension Lua {
             vm.remove(originalStackTop + 1)
 
             if result == LUA_OK {
-                var values = [LuaValue]()
+                var values = [LuaValueRepresentable]()
                 let numReturnValues = vm.stackSize() - originalStackTop
 
                 for _ in 0..<numReturnValues {
@@ -41,21 +41,20 @@ extension Lua {
             }
         }
 
-        override open func kind() -> Lua.Kind { return .function }
+        override public var kind: Lua.Kind { return .function }
 
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValue) -> String? {
-            if value.kind() != .function { return "function" }
+        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+            if value.kind != .function { return "function" }
             return nil
         }
-
     }
 
-    public typealias TypeChecker = (Lua.VirtualMachine, LuaValue) -> String?
+    public typealias TypeChecker = (Lua.VirtualMachine, LuaValueRepresentable) -> String?
 
-    public typealias SwiftFunction = (Arguments) throws -> [LuaValue]
+    public typealias SwiftFunction = (Arguments) throws -> [LuaValueRepresentable]
 
     open class Arguments {
-        internal var values = [LuaValue]()
+        internal var values = [LuaValueRepresentable]()
 
         open var string: String { return values.remove(at: 0) as! String }
         open var number: Number { return values.remove(at: 0) as! Number }
@@ -69,7 +68,7 @@ extension Lua {
         open var integer: Int64 { return (values.remove(at: 0) as! Number).toInteger() }
         open var double: Double { return (values.remove(at: 0) as! Number).toDouble() }
 
-        open func removeValue(at index: Int) -> LuaValue { return values.remove(at: index) }
+        open func removeValue(at index: Int) -> LuaValueRepresentable { return values.remove(at: index) }
 
         open func customType<T: LuaCustomTypeInstance>() -> T { return (values.remove(at: 0) as! Userdata).toCustomType() }
     }

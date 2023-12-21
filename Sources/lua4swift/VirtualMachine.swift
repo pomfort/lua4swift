@@ -81,9 +81,9 @@ public struct Lua {
         }
 
         // pops the value off the stack completely and returns it
-        internal func popValue(_ pos: Int) -> LuaValue? {
+        internal func popValue(_ pos: Int) -> LuaValueRepresentable? {
             moveToStackTop(pos)
-            var v: LuaValue?
+            var v: LuaValueRepresentable?
             switch kind(-1) {
             case .string:
                 var len: Int = 0
@@ -165,17 +165,17 @@ public struct Lua {
             return popValue(-1) as! Userdata // this pops ptr off stack
         }
 
-        open func eval(_ url: URL, args: [LuaValue] = []) throws -> [LuaValue] {
+        open func eval(_ url: URL, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
             let fn = try createFunction(url)
             return try eval(function: fn, args: args)
         }
 
-        open func eval(_ str: String, args: [LuaValue] = []) throws -> [LuaValue] {
+        open func eval(_ str: String, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
             let fn = try createFunction(str)
             return try eval(function: fn, args: args)
         }
 
-        private func eval(function f: Function, args: [LuaValue]) throws -> [LuaValue] {
+        private func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
             try f.call(args)
         }
 

@@ -2,14 +2,14 @@ import CLua
 
 extension Lua {
     open class Table: Lua.StoredValue {
-        override open func kind() -> Lua.Kind { return .table }
+        override open var kind: Lua.Kind { return .table }
 
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValue) -> String? {
-            if value.kind() != .table { return "table" }
+        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+            if value.kind != .table { return "table" }
             return nil
         }
 
-        open subscript(key: LuaValue) -> LuaValue {
+        open subscript(key: LuaValueRepresentable) -> LuaValueRepresentable {
             get {
                 push(vm)
 
@@ -32,8 +32,8 @@ extension Lua {
             }
         }
 
-        open func keys() -> [LuaValue] {
-            var k = [LuaValue]()
+        open func keys() -> [LuaValueRepresentable] {
+            var k = [LuaValueRepresentable]()
             push(vm) // table
             lua_pushnil(vm.state)
             while lua_next(vm.state, -2) != 0 {
@@ -46,14 +46,14 @@ extension Lua {
             return k
         }
 
-        open func becomeMetatableFor(_ thing: LuaValue) {
+        open func becomeMetatableFor(_ thing: LuaValueRepresentable) {
             thing.push(vm)
             self.push(vm)
             lua_setmetatable(vm.state, -2)
             vm.pop() // thing
         }
 
-        open func asTupleArray<K1: LuaValue, V1: LuaValue, K2: LuaValue, V2: LuaValue>(_ kfn: (K1) -> K2 = {$0 as! K2}, _ vfn: (V1) -> V2 = {$0 as! V2}) -> [(K2, V2)] {
+        open func asTupleArray<K1: LuaValueRepresentable, V1: LuaValueRepresentable, K2: LuaValueRepresentable, V2: LuaValueRepresentable>(_ kfn: (K1) -> K2 = {$0 as! K2}, _ vfn: (V1) -> V2 = {$0 as! V2}) -> [(K2, V2)] {
             var v = [(K2, V2)]()
             for key in keys() {
                 let val = self[key]
@@ -64,7 +64,7 @@ extension Lua {
             return v
         }
 
-        open func asDictionary<K1: LuaValue, V1: LuaValue, K2: LuaValue, V2: LuaValue>(_ kfn: (K1) -> K2 = {$0 as! K2}, _ vfn: (V1) -> V2 = {$0 as! V2}) -> [K2: V2] where K2: Hashable {
+        open func asDictionary<K1: LuaValueRepresentable, V1: LuaValueRepresentable, K2: LuaValueRepresentable, V2: LuaValueRepresentable>(_ kfn: (K1) -> K2 = {$0 as! K2}, _ vfn: (V1) -> V2 = {$0 as! V2}) -> [K2: V2] where K2: Hashable {
             var v = [K2: V2]()
             for (key, val) in asTupleArray(kfn, vfn) {
                 v[key] = val
@@ -72,7 +72,7 @@ extension Lua {
             return v
         }
 
-        open func asSequence<T: LuaValue>() -> [T] {
+        open func asSequence<T: LuaValueRepresentable>() -> [T] {
             var sequence = [T]()
 
             let dict: [Int64 : T] = asDictionary({ (k: Number) in k.toInteger() }, { $0 as T })
@@ -92,7 +92,7 @@ extension Lua {
             return sequence
         }
 
-        func storeReference(_ v: LuaValue) -> Int {
+        func storeReference(_ v: LuaValueRepresentable) -> Int {
             v.push(vm)
             return vm.ref(RegistryIndex)
         }

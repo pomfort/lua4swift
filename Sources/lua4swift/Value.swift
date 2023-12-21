@@ -1,13 +1,13 @@
 import CLua
 
-public protocol LuaValue {
+public protocol LuaValueRepresentable {
     func push(_ vm: Lua.VirtualMachine)
-    func kind() -> Lua.Kind
-    static func arg(_ vm: Lua.VirtualMachine, value: LuaValue) -> String?
+    var kind: Lua.Kind { get }
+    static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String?
 }
 
 extension Lua {
-    open class StoredValue: LuaValue, Equatable {
+    open class StoredValue: LuaValueRepresentable, Equatable {
 
         fileprivate let registryLocation: Int
         internal unowned var vm: VirtualMachine
@@ -26,11 +26,11 @@ extension Lua {
             vm.rawGet(tablePosition: RegistryIndex, index: registryLocation)
         }
 
-        open func kind() -> Kind {
+        open var kind: Kind {
             fatalError("Override kind()")
         }
 
-        open class func arg(_ vm: VirtualMachine, value: LuaValue) -> String? {
+        open class func arg(_ vm: VirtualMachine, value: LuaValueRepresentable) -> String? {
             fatalError("Override arg()")
         }
 

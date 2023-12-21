@@ -22,21 +22,21 @@ extension Lua {
             return userdataPointer().pointee
         }
 
-        override open func kind() -> Lua.Kind { return .userdata }
+        override open var kind: Lua.Kind { return .userdata }
 
     }
 
     open class LightUserdata: Lua.StoredValue {
-        override open func kind() -> Lua.Kind { return .lightUserdata }
+        override open var kind: Lua.Kind { return .lightUserdata }
 
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValue) -> String? {
-            if value.kind() != .lightUserdata { return "light userdata" }
+        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+            if value.kind != .lightUserdata { return "light userdata" }
             return nil
         }
     }
 
     open class CustomType<T: LuaCustomTypeInstance>: Table {
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValue) -> String? {
+        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
             value.push(vm)
             let isLegit = luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil
             vm.pop()
@@ -51,7 +51,7 @@ extension Lua {
         open var gc: ((T) -> Void)?
         open var eq: ((T, T) -> Bool)?
 
-        public func createMethod(_ typeCheckers: [TypeChecker], _ fn: @escaping (T, Arguments) -> [LuaValue]) -> Function {
+        public func createMethod(_ typeCheckers: [TypeChecker], _ fn: @escaping (T, Arguments) -> [LuaValueRepresentable]) -> Function {
             var typeCheckers = typeCheckers
             typeCheckers.insert(CustomType<T>.arg, at: 0)
             return vm.createFunction(typeCheckers) { (args: Arguments) in
