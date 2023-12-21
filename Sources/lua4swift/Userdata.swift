@@ -50,7 +50,7 @@ open class CustomType<T: CustomTypeInstance>: Table {
     open var gc: ((T) -> Void)?
     open var eq: ((T, T) -> Bool)?
 
-    public func createMethod(_ typeCheckers: [TypeChecker], _ fn: @escaping (T, Arguments) -> SwiftReturnValue) -> Function {
+    public func createMethod(_ typeCheckers: [TypeChecker], _ fn: @escaping (T, Arguments) -> [LuaValue]) -> Function {
         var typeCheckers = typeCheckers
         typeCheckers.insert(CustomType<T>.arg, at: 0)
         return vm.createFunction(typeCheckers) { (args: Arguments) in

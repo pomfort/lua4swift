@@ -5,11 +5,6 @@ internal let RegistryIndex = Int(-LUAI_MAXSTACK - 1000)
 private let GlobalsTable = Int(LUA_RIDX_GLOBALS)
 
 public struct Lua {
-    public enum MaybeFunction {
-        case value(Function)
-        case error(String)
-    }
-
     public typealias ErrorHandler = (String) -> Void
 
     public enum Kind {
@@ -126,21 +121,19 @@ public struct Lua {
             return popValue(-1) as! Table
         }
 
-        open func createFunction(_ body: URL) -> MaybeFunction {
+        open func createFunction(_ body: URL) throws -> Function {
             if luaL_loadfilex(state, body.path, nil) == LUA_OK {
-                return .value(popValue(-1) as! Function)
-            }
-            else {
-                return .error(popError())
+                return popValue(-1) as! Function
+            } else {
+                throw Lua.Error(popError())
             }
         }
 
-        open func createFunction(_ body: String) -> MaybeFunction {
+        open func createFunction(_ body: String) throws -> Function {
             if luaL_loadstring(state, body.cString(using: .utf8)) == LUA_OK {
-                return .value(popValue(-1) as! Function)
-            }
-            else {
-                return .error(popError())
+                return popValue(-1) as! Function
+            } else {
+                throw Lua.Error(popError())
             }
         }
 
@@ -172,36 +165,18 @@ public struct Lua {
             return popValue(-1) as! Userdata // this pops ptr off stack
         }
 
-        public enum EvalResults {
-            case values([LuaValue])
-            case error(String)
+        open func eval(_ url: URL, args: [LuaValue] = []) throws -> [LuaValue] {
+            let fn = try createFunction(url)
+            return try eval(function: fn, args: args)
         }
 
-        open func eval(_ url: URL, args: [LuaValue] = []) -> EvalResults {
-            let fn = createFunction(url)
-
-            return eval(function: fn, args: args)
+        open func eval(_ str: String, args: [LuaValue] = []) throws -> [LuaValue] {
+            let fn = try createFunction(str)
+            return try eval(function: fn, args: args)
         }
 
-        open func eval(_ str: String, args: [LuaValue] = []) -> EvalResults {
-            let fn = createFunction(str)
-
-            return eval(function: fn, args: args)
-        }
-
-        private func eval(function fn: MaybeFunction, args: [LuaValue])  -> EvalResults {
-            switch fn {
-            case let .value(f):
-                let results = f.call(args)
-                switch results {
-                case let .values(vs):
-                    return .values(vs)
-                case let .error(e):
-                    return .error(e)
-                }
-            case let .error(e):
-                return .error(e)
-            }
+        private func eval(function f: Function, args: [LuaValue]) throws -> [LuaValue] {
+            try f.call(args)
         }
 
         open func createFunction(_ typeCheckers: [TypeChecker], _ fn: @escaping SwiftFunction) -> Function {
@@ -226,25 +201,13 @@ public struct Lua {
                 }
 
                 // call fn
-                switch fn(args) {
-                case .nothing:
-                    return 0
-                case .value(let value):
-                    if let v = value {
-                        v.push(vm)
-                    }
-                    else {
-                        Nil().push(vm)
-                    }
-                    return 1
-                case let .values(values):
-                    for value in values {
-                        value.push(vm)
-                    }
+                do {
+                    let values = try fn(args)
+                    values.forEach { $0.push(vm) }
                     return Int32(values.count)
-                case let .error(error):
-                    print("pushing error: \(error)")
-                    error.push(vm)
+                } catch {
+                    let e = (error as? LocalizedError)?.errorDescription ?? "Swift Error \(error)"
+                    e.push(vm)
                     lua_error(vm.state)
                     return 0 // uhh, we don't actually get here
                 }
@@ -279,14 +242,14 @@ public struct Lua {
                 (ud.userdataPointer() as UnsafeMutablePointer<T>).deinitialize(count: 1)
                 let o: T = ud.toCustomType()
                 gc?(o)
-                return .nothing
+                return []
             }
 
             if let eq = lib.eq {
                 lib["__eq"] = createFunction([CustomType<T>.arg, CustomType<T>.arg]) { args in
                     let a: T = args.customType()
                     let b: T = args.customType()
-                    return .value(eq(a, b))
+                    return [eq(a, b)]
                 }
             }
             return lib

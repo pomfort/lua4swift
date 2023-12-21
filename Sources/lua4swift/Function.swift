@@ -1,12 +1,17 @@
 import CLua
 
-public enum FunctionResults {
-    case values([LuaValue])
-    case error(String)
+public extension Lua {
+    struct Error: Swift.Error {
+        public let literal: String
+
+        internal init(_ e: String) {
+            self.literal = e
+        }
+    }
 }
 
 open class Function: Lua.StoredValue {
-    open func call(_ args: [LuaValue]) -> FunctionResults {
+    open func call(_ args: [LuaValue]) throws -> [LuaValue] {
         let debugTable = vm.globals["debug"] as! Table
         let messageHandler = debugTable["traceback"]
 
@@ -30,11 +35,10 @@ open class Function: Lua.StoredValue {
                 values.append(v)
             }
 
-            return .values(values)
-        }
-        else {
+            return values
+        } else {
             let err = vm.popError()
-            return .error(err)
+            throw Lua.Error(err)
         }
     }
 
@@ -49,17 +53,9 @@ open class Function: Lua.StoredValue {
 
 public typealias TypeChecker = (Lua.VirtualMachine, LuaValue) -> String?
 
-public enum SwiftReturnValue {
-    case value(LuaValue?)
-    case values([LuaValue])
-    case nothing // convenience for Values([])
-    case error(String)
-}
-
-public typealias SwiftFunction = (Arguments) -> SwiftReturnValue
+public typealias SwiftFunction = (Arguments) throws -> [LuaValue]
 
 open class Arguments {
-
     internal var values = [LuaValue]()
 
     open var string: String { return values.remove(at: 0) as! String }
@@ -77,5 +73,4 @@ open class Arguments {
     open func removeValue(at index: Int) -> LuaValue { return values.remove(at: index) }
 
     open func customType<T: CustomTypeInstance>() -> T { return (values.remove(at: 0) as! Userdata).toCustomType() }
-
 }
