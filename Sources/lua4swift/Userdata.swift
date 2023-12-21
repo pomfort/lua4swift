@@ -54,12 +54,79 @@ extension Lua {
         open var gc: ((T) -> Void)?
         open var eq: ((T, T) -> Bool)?
 
-        public func createMethod(_ typeCheckers: [TypeChecker], _ fn: @escaping (T, Arguments) -> [LuaValueRepresentable]) -> Function {
-            var typeCheckers = typeCheckers
-            typeCheckers.insert(CustomType<T>.arg, at: 0)
-            return vm.createFunction(typeCheckers) { (args: Arguments) in
-                let o: T = args.customType()
-                return fn(o, args)
+        public func createMethod(_ fn: @escaping (T) -> Void) -> Function {
+            vm.createFunction([CustomType<T>.arg]) {
+                fn(($0[0] as! Userdata).toCustomType())
+                return []
+            }
+        }
+
+        public func createMethod<R: LuaValueRepresentable>(_ fn: @escaping (T) -> R) -> Function {
+            vm.createFunction([CustomType<T>.arg]) {
+                [fn(($0[0] as! Userdata).toCustomType())]
+            }
+        }
+
+        public func createMethod(_ fn: @escaping (T) -> [LuaValueRepresentable]) -> Function {
+            vm.createFunction([CustomType<T>.arg]) {
+                 fn(($0[0] as! Userdata).toCustomType())
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable>(_ fn: @escaping (T, A1) -> Void) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg]) {
+                fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1)
+                return []
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (T, A1) -> R) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg]) {
+                [fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1)]
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable>(_ fn: @escaping (T, A1) -> [LuaValueRepresentable]) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg]) {
+                fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1)
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2) -> Void) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg, A2.arg]) {
+                fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1, $0[2] as! A2)
+                return []
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2) -> R) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg, A2.arg]) {
+                [fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1, $0[2] as! A2)]
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2) -> [LuaValueRepresentable]) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg, A2.arg]) {
+                fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1, $0[2] as! A2)
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2, A3) -> Void) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg, A2.arg, A3.arg]) {
+                fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1, $0[2] as! A2, $0[3] as! A3)
+                return []
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2, A3) -> R) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg, A2.arg, A3.arg]) {
+                [fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1, $0[2] as! A2, $0[3] as! A3)]
+            }
+        }
+
+        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2, A3) -> [LuaValueRepresentable]) -> Function {
+            vm.createFunction([CustomType<T>.arg, A1.arg, A2.arg, A3.arg]) {
+                fn(($0[0] as! Userdata).toCustomType(), $0[1] as! A1, $0[2] as! A2, $0[3] as! A3)
             }
         }
     }

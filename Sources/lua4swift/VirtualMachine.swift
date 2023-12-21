@@ -179,25 +179,21 @@ public struct Lua {
             try f.call(args)
         }
 
-        open func createFunction(_ typeCheckers: [TypeChecker], _ fn: @escaping SwiftFunction) -> Function {
+        internal typealias TypeChecker = (Lua.VirtualMachine, LuaValueRepresentable) -> String?
+
+        internal func createFunction(_ typeCheckers: [TypeChecker], _ fn: @escaping SwiftFunction) -> Function {
             let f: @convention(block) (OpaquePointer) -> Int32 = { [weak self] _ in
                 if self == nil { return 0 }
                 let vm = self!
 
-                // check types
-                for i in 0 ..< vm.stackSize() {
-                    let typeChecker = typeCheckers[i]
-                    vm.pushFromStack(i+1)
-                    if let expectedType = typeChecker(vm, vm.popValue(-1)!) {
+                // build args list
+                var args = [LuaValueRepresentable]()
+                for (i, typeChecker) in typeCheckers.enumerated() {
+                    let arg = vm.popValue(1)!
+                    if let expectedType = typeChecker(vm, arg) {
                         vm.argError(expectedType, at: i+1)
                     }
-                }
-
-                // build args list
-                let args = Arguments()
-                for _ in 0 ..< vm.stackSize() {
-                    let arg = vm.popValue(1)!
-                    args.values.append(arg)
+                    args.append(arg)
                 }
 
                 // call fn
@@ -220,6 +216,82 @@ public struct Lua {
             return popValue(-1) as! Function
         }
 
+        public func createFunction(_ fn: @escaping () throws -> Void) -> Function {
+            self.createFunction([]) { _ in
+                try fn()
+                return []
+            }
+        }
+
+        public func createFunction<R: LuaValueRepresentable>(_ fn: @escaping () throws -> R) -> Function {
+            self.createFunction([]) { _ in
+                try [fn()]
+            }
+        }
+
+        public func createFunction(_ fn: @escaping () throws -> [LuaValueRepresentable]) -> Function {
+            self.createFunction([]) { _ in
+                try fn()
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable>(_ fn: @escaping (A1) throws -> Void) -> Function {
+            self.createFunction([A1.arg]) {
+                try fn($0[0] as! A1)
+                return []
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (A1) throws -> R) -> Function {
+            self.createFunction([A1.arg]) {
+                try [fn($0[0] as! A1)]
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable>(_ fn: @escaping (A1) throws -> [LuaValueRepresentable]) -> Function {
+            self.createFunction([A1.arg]) {
+                try fn($0[0] as! A1)
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable, A2: LuaValueRepresentable>(_ fn: @escaping (A1, A2) throws -> Void) -> Function {
+            self.createFunction([A1.arg, A2.arg]) {
+                try fn($0[0] as! A1, $0[1] as! A2)
+                return []
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable, A2: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (A1, A2) throws -> R) -> Function {
+            self.createFunction([A1.arg, A2.arg]) {
+                try [fn($0[0] as! A1, $0[1] as! A2)]
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable, A2: LuaValueRepresentable>(_ fn: @escaping (A1, A2) throws -> [LuaValueRepresentable]) -> Function {
+            self.createFunction([A1.arg, A2.arg]) {
+                try fn($0[0] as! A1, $0[1] as! A2)
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable>(_ fn: @escaping (A1, A2, A3) throws -> Void) -> Function {
+            self.createFunction([A1.arg, A2.arg, A3.arg]) {
+                try fn($0[0] as! A1, $0[1] as! A2, $0[2] as! A3)
+                return []
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (A1, A2, A3) throws -> R) -> Function {
+            self.createFunction([A1.arg, A2.arg, A3.arg]) {
+                try [fn($0[0] as! A1, $0[1] as! A2, $0[2] as! A3)]
+            }
+        }
+
+        public func createFunction<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable>(_ fn: @escaping (A1, A2, A3) throws -> [LuaValueRepresentable]) -> Function {
+            self.createFunction([A1.arg, A2.arg, A3.arg]) {
+                try fn($0[0] as! A1, $0[1] as! A2, $0[2] as! A3)
+            }
+        }
+
         fileprivate func argError(_ expectedType: String, at argPosition: Int) {
             luaL_typeerror(state, Int32(argPosition), expectedType.cString(using: .utf8))
         }
@@ -237,8 +309,7 @@ public struct Lua {
             lib["__name"] = T.luaTypeName()
 
             let gc = lib.gc
-            lib["__gc"] = createFunction([CustomType<T>.arg]) { args in
-                let ud = args.userdata
+            lib["__gc"] = createFunction { (ud: Userdata) in
                 (ud.userdataPointer() as UnsafeMutablePointer<T>).deinitialize(count: 1)
                 let o: T = ud.toCustomType()
                 gc?(o)
@@ -246,10 +317,8 @@ public struct Lua {
             }
 
             if let eq = lib.eq {
-                lib["__eq"] = createFunction([CustomType<T>.arg, CustomType<T>.arg]) { args in
-                    let a: T = args.customType()
-                    let b: T = args.customType()
-                    return [eq(a, b)]
+                lib["__eq"] = createFunction { (a: Userdata, b: Userdata) in
+                    [eq(a.toCustomType(), b.toCustomType())]
                 }
             }
             return lib
