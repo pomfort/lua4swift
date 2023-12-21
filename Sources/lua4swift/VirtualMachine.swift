@@ -148,14 +148,14 @@ public struct Lua {
             return err
         }
 
-        open func createUserdataMaybe<T: CustomTypeInstance>(_ o: T?) -> Userdata? {
+        open func createUserdataMaybe<T: LuaCustomTypeInstance>(_ o: T?) -> Userdata? {
             if let u = o {
                 return createUserdata(u)
             }
             return nil
         }
 
-        open func createUserdata<T: CustomTypeInstance>(_ o: T) -> Userdata {
+        open func createUserdata<T: LuaCustomTypeInstance>(_ o: T) -> Userdata {
             let userdata = lua_newuserdatauv(state, MemoryLayout<T>.size, 1) // this both pushes ptr onto stack and returns it
 
             let ptr = userdata!.bindMemory(to: T.self, capacity: 1)
