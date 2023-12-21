@@ -1,8 +1,8 @@
 import CLua
 
 extension Lua {
-    open class Number: Lua.StoredValue, CustomDebugStringConvertible {
-        override open var kind: Lua.Kind { return .number }
+    open class Number: Lua.StoredValue, LuaValueRepresentable, CustomDebugStringConvertible {
+        open var kind: Lua.Kind { return .number }
 
         open func toDouble() -> Double {
             push(vm)
@@ -34,7 +34,7 @@ extension Lua {
             return isInteger
         }
 
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
             if value.kind != .number { return "number" }
             return nil
         }

@@ -1,10 +1,10 @@
 import CLua
 
 extension Lua {
-    open class Table: Lua.StoredValue {
-        override open var kind: Lua.Kind { return .table }
+    open class Table: Lua.StoredValue, LuaValueRepresentable {
+        open var kind: Lua.Kind { return .table }
 
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
             if value.kind != .table { return "table" }
             return nil
         }

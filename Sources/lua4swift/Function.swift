@@ -9,7 +9,7 @@ extension Lua {
         }
     }
 
-    open class Function: Lua.StoredValue {
+    open class Function: Lua.StoredValue, LuaValueRepresentable {
         open func call(_ args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
             let debugTable = vm.globals["debug"] as! Table
             let messageHandler = debugTable["traceback"]
@@ -41,9 +41,9 @@ extension Lua {
             }
         }
 
-        override public var kind: Lua.Kind { return .function }
+        public var kind: Lua.Kind { return .function }
 
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
             if value.kind != .function { return "function" }
             return nil
         }

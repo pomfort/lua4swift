@@ -6,7 +6,7 @@ public protocol LuaCustomTypeInstance {
 }
 
 extension Lua {
-    open class Userdata: Lua.StoredValue {
+    open class Userdata: Lua.StoredValue, LuaValueRepresentable {
         open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
             push(vm)
             let ptr = lua_touserdata(vm.state, -1)
@@ -22,14 +22,17 @@ extension Lua {
             return userdataPointer().pointee
         }
 
-        override open var kind: Lua.Kind { return .userdata }
+        open var kind: Lua.Kind { return .userdata }
 
+        public static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+            fatalError("unimplemented")
+        }
     }
 
-    open class LightUserdata: Lua.StoredValue {
-        override open var kind: Lua.Kind { return .lightUserdata }
+    open class LightUserdata: Lua.StoredValue, LuaValueRepresentable {
+        open var kind: Lua.Kind { return .lightUserdata }
 
-        override open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
             if value.kind != .lightUserdata { return "light userdata" }
             return nil
         }

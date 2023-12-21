@@ -7,8 +7,7 @@ public protocol LuaValueRepresentable {
 }
 
 extension Lua {
-    open class StoredValue: LuaValueRepresentable, Equatable {
-
+    open class StoredValue: Equatable {
         fileprivate let registryLocation: Int
         internal unowned var vm: VirtualMachine
 
@@ -24,14 +23,6 @@ extension Lua {
 
         open func push(_ vm: VirtualMachine) {
             vm.rawGet(tablePosition: RegistryIndex, index: registryLocation)
-        }
-
-        open var kind: Kind {
-            fatalError("Override kind()")
-        }
-
-        open class func arg(_ vm: VirtualMachine, value: LuaValueRepresentable) -> String? {
-            fatalError("Override arg()")
         }
 
         public static func ==(lhs: StoredValue, rhs: StoredValue) -> Bool {
