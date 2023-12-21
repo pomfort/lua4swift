@@ -16,5 +16,7 @@ extension Lua {
         public static func ==(_: Nil, _: Nil) -> Bool {
             true
         }
+
+        public static let `nil`: Nil = .init()
     }
 }
