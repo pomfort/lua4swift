@@ -43,9 +43,9 @@ extension Lua {
 
         public var kind: Lua.Kind { return .function }
 
-        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-            if value.kind != .function { return "function" }
-            return nil
+        public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+            guard value.kind == .function else { throw Lua.TypeGuardError(kind: .function) }
+            return value as! Self
         }
     }
 

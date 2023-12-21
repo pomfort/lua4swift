@@ -4,9 +4,9 @@ extension Lua {
     open class Table: Lua.StoredValue, LuaValueRepresentable {
         open var kind: Lua.Kind { return .table }
 
-        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-            if value.kind != .table { return "table" }
-            return nil
+        open class func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+            guard value.kind == .table else { throw Lua.TypeGuardError(kind: .table) }
+            return value as! Self
         }
 
         open subscript(key: LuaValueRepresentable) -> LuaValueRepresentable {

@@ -1,16 +1,16 @@
 import CLua
 
 extension Lua {
-    open class Nil: LuaValueRepresentable, Equatable {
-        open func push(_ vm: Lua.VirtualMachine) {
+    public final class Nil: LuaValueRepresentable, Equatable {
+        public func push(_ vm: Lua.VirtualMachine) {
             lua_pushnil(vm.state)
         }
 
-        open var kind: Lua.Kind { return .nil }
+        public var kind: Lua.Kind { return .nil }
 
-        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-            if value.kind != .nil { return "nil" }
-            return nil
+        public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Nil {
+            guard value.kind == .nil else { throw Lua.TypeGuardError(kind: .nil) }
+            return .nil
         }
 
         public static func ==(_: Nil, _: Nil) -> Bool {

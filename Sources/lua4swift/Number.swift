@@ -1,24 +1,24 @@
 import CLua
 
 extension Lua {
-    open class Number: Lua.StoredValue, LuaValueRepresentable, CustomDebugStringConvertible {
-        open var kind: Lua.Kind { return .number }
+    public final class Number: Lua.StoredValue, LuaValueRepresentable, CustomDebugStringConvertible {
+        public var kind: Lua.Kind { return .number }
 
-        open func toDouble() -> Double {
+        public func toDouble() -> Double {
             push(vm)
             let v = lua_tonumberx(vm.state, -1, nil)
             vm.pop()
             return v
         }
 
-        open func toInteger() -> Int64 {
+        public func toInteger() -> Int64 {
             push(vm)
             let v = lua_tointegerx(vm.state, -1, nil)
             vm.pop()
             return v
         }
 
-        open var debugDescription: String {
+        public var debugDescription: String {
             push(vm)
             let isInteger = lua_isinteger(vm.state, -1) != 0
             vm.pop()
@@ -27,16 +27,16 @@ extension Lua {
             else { return toDouble().description }
         }
 
-        open var isInteger: Bool {
+        public var isInteger: Bool {
             push(vm)
             let isInteger = lua_isinteger(vm.state, -1) != 0
             vm.pop()
             return isInteger
         }
 
-        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-            if value.kind != .number { return "number" }
-            return nil
+        public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Number {
+            guard value.kind == .number else { throw Lua.TypeGuardError(kind: .number) }
+            return value as! Number
         }
     }
 }
@@ -48,12 +48,12 @@ extension Double: LuaValueRepresentable {
 
     public var kind: Lua.Kind { return .number }
 
-    public static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+    public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
         value.push(vm)
         let isDouble = lua_isinteger(vm.state, -1) != 0
         vm.pop()
-        if !isDouble { return "double" }
-        return nil
+        guard isDouble else { throw Lua.TypeGuardError(type: "Double") }
+        return value as! Double
     }
 }
 
@@ -64,12 +64,12 @@ extension Int64: LuaValueRepresentable {
 
     public var kind: Lua.Kind { return .number }
 
-    public static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
+    public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
         value.push(vm)
         let isDouble = lua_isinteger(vm.state, -1) != 0
         vm.pop()
-        if !isDouble { return "integer" }
-        return nil
+        guard isDouble else { throw Lua.TypeGuardError(type: "Int64") }
+        return value as! Int64
     }
 }
 
@@ -80,7 +80,7 @@ extension Int: LuaValueRepresentable {
 
     public var kind: Lua.Kind { return .number }
 
-    public static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-        return Int64.arg(vm, value: value)
+    public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        try Int(Int64.unwrap(vm, value))
     }
 }

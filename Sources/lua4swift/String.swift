@@ -7,8 +7,8 @@ extension String: LuaValueRepresentable {
 
     public var kind: Lua.Kind { return .string }
 
-    public static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-        if value.kind != .string { return "string" }
-        return nil
+    public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        guard value.kind == .string else { throw Lua.TypeGuardError(kind: .string) }
+        return value as! String
     }
 }

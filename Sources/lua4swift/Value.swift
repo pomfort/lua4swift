@@ -3,10 +3,21 @@ import CLua
 public protocol LuaValueRepresentable {
     func push(_ vm: Lua.VirtualMachine)
     var kind: Lua.Kind { get }
-    static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String?
+    static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self
 }
 
 extension Lua {
+    struct TypeGuardError: Swift.Error {
+        let type: String
+
+        init(kind: Kind) {
+            self.type = String(describing: kind)
+        }
+        init(type: String) {
+            self.type = type
+        }
+    }
+
     open class StoredValue: Equatable {
         fileprivate let registryLocation: Int
         internal unowned var vm: VirtualMachine

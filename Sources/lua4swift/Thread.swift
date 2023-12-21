@@ -1,12 +1,12 @@
 import CLua
 
 extension Lua {
-    open class Thread: Lua.StoredValue, LuaValueRepresentable {
-        open var kind: Lua.Kind { return .thread }
+    final public class Thread: Lua.StoredValue, LuaValueRepresentable {
+        public var kind: Lua.Kind { return .thread }
 
-        open class func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-            if value.kind != .thread { return "thread" }
-            return nil
+        public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Thread {
+            guard value.kind == .thread else { throw Lua.TypeGuardError(kind: .thread) }
+            return value as! Thread
         }
     }
 }

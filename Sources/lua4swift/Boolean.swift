@@ -7,8 +7,8 @@ extension Bool: LuaValueRepresentable {
 
     public var kind: Lua.Kind { return .boolean }
 
-    public static func arg(_ vm: Lua.VirtualMachine, value: LuaValueRepresentable) -> String? {
-        if value.kind != .boolean { return "boolean" }
-        return nil
+    public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        guard value.kind == .boolean else { throw Lua.TypeGuardError(kind: .boolean) }
+        return value as! Bool
     }
 }
