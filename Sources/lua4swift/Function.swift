@@ -48,6 +48,4 @@ extension Lua {
             return value as! Self
         }
     }
-
-    public typealias SwiftFunction = ([LuaValueRepresentable]) throws -> [LuaValueRepresentable]
 }

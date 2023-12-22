@@ -17,7 +17,9 @@ class Lua_Tests: XCTestCase {
 
         let stringxLib = vm.createTable()
 
-        stringxLib["split"] = vm.createFunction { (subject: String, separator: String) in
+        stringxLib["split"] = vm.createFunction { args in
+            let subject = try String.unwrap(vm, args[0])
+            let separator = try String.unwrap(vm, args[1])
             let fragments = subject.components(separatedBy: separator)
 
             let results = vm.createTable()
@@ -51,19 +53,20 @@ class Lua_Tests: XCTestCase {
         let vm = Lua.VirtualMachine()
 
         let noteLib: Lua.CustomType<Note> = vm.createCustomType { type in
-            type["setName"] = type.createMethod { (self: Note, name: String) in
+            type["setName"] = type.createMethod { (self, args) -> Void in
+                let name = try String.unwrap(vm, args[0])
                 self.name = name
             }
-            type["getName"] = type.createMethod { (self: Note) in
+            type["getName"] = type.createMethod { (self: Note, _) in
                 self.name
             }
         }
 
-        noteLib["new"] = vm.createFunction { (name: String) in
+        noteLib["new"] = vm.createFunction { args in
+            let name = try String.unwrap(vm, args[0])
             let note = Note()
             note.name = name
-            let data = vm.createUserdata(note)
-            return data
+            return vm.createUserdata(note)
         }
 
         // setup the note class

@@ -55,79 +55,22 @@ extension Lua {
         open var gc: ((T) -> Void)?
         open var eq: ((T, T) -> Bool)?
 
-        public func createMethod(_ fn: @escaping (T) -> Void) -> Function {
-            vm.createFunction(nargs: 1) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType())
+        public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
+            vm.createFunction { args in
+                try fn(Userdata.unwrap(self.vm, args[0]).toCustomType(), Array(args[1...]))
+            }
+        }
+
+        public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> LuaValueRepresentable) -> Function {
+            self.createMethod {
+                try [fn($0, $1)]
+            }
+        }
+
+        public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> Void) -> Function {
+            self.createMethod {
+                try fn($0, $1)
                 return []
-            }
-        }
-
-        public func createMethod<R: LuaValueRepresentable>(_ fn: @escaping (T) -> R) -> Function {
-            vm.createFunction(nargs: 1) {
-                try [fn(Userdata.unwrap(self.vm, $0[0]).toCustomType())]
-            }
-        }
-
-        public func createMethod(_ fn: @escaping (T) -> [LuaValueRepresentable]) -> Function {
-            vm.createFunction(nargs: 1) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType())
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable>(_ fn: @escaping (T, A1) -> Void) -> Function {
-            vm.createFunction(nargs: 2) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]))
-                return []
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (T, A1) -> R) -> Function {
-            vm.createFunction(nargs: 2) {
-                try [fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]))]
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable>(_ fn: @escaping (T, A1) -> [LuaValueRepresentable]) -> Function {
-            vm.createFunction(nargs: 2) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]))
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2) -> Void) -> Function {
-            vm.createFunction(nargs: 3) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]), A2.unwrap(self.vm, $0[2]))
-                return []
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2) -> R) -> Function {
-            vm.createFunction(nargs: 3) {
-                try [fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]), A2.unwrap(self.vm, $0[2]))]
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2) -> [LuaValueRepresentable]) -> Function {
-            vm.createFunction(nargs: 3) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]), A2.unwrap(self.vm, $0[2]))
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2, A3) -> Void) -> Function {
-            vm.createFunction(nargs: 4) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]), A2.unwrap(self.vm, $0[2]), A3.unwrap(self.vm, $0[3]))
-                return []
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable, R: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2, A3) -> R) -> Function {
-            vm.createFunction(nargs: 4) {
-                try [fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]), A2.unwrap(self.vm, $0[2]), A3.unwrap(self.vm, $0[3]))]
-            }
-        }
-
-        public func createMethod<A1: LuaValueRepresentable, A2: LuaValueRepresentable, A3: LuaValueRepresentable>(_ fn: @escaping (T, A1, A2, A3) -> [LuaValueRepresentable]) -> Function {
-            vm.createFunction(nargs: 4) {
-                try fn(Userdata.unwrap(self.vm, $0[0]).toCustomType(), A1.unwrap(self.vm, $0[1]), A2.unwrap(self.vm, $0[2]), A3.unwrap(self.vm, $0[3]))
             }
         }
     }
