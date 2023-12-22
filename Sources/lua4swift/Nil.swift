@@ -1,7 +1,7 @@
 import CLua
 
 extension Lua {
-    public final class Nil: LuaValueRepresentable, Equatable {
+    public final class Nil: LuaValueRepresentable, Equatable, CustomDebugStringConvertible {
         public func push(_ vm: Lua.VirtualMachine) {
             lua_pushnil(vm.state)
         }
@@ -18,5 +18,7 @@ extension Lua {
         }
 
         public static let `nil`: Nil = .init()
+
+        public var debugDescription: String { (nil as Int?).debugDescription }
     }
 }
