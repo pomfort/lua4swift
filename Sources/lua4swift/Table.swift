@@ -48,7 +48,9 @@ extension Lua {
 
         public var description: String {
             "[\n" + self.keys().map {
-                "   \($0): \(self[$0])"
+                let v = self[$0]
+                let t = v as? Table
+                return "   \($0): \(t.map { _ in "[Table...]" } ?? "\(v)")"
             }.joined(separator: ",\n")
             + "\n]"
         }
