@@ -6,7 +6,7 @@ public protocol LuaCustomTypeInstance {
 }
 
 extension Lua {
-    open class Userdata: Lua.StoredValue, LuaValueRepresentable {
+    open class Userdata: Lua.StoredValue, LuaValueRepresentable, CustomStringConvertible {
         open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
             push(vm)
             let ptr = lua_touserdata(vm.state, -1)
@@ -28,15 +28,19 @@ extension Lua {
             guard value.kind == .userdata else { throw Lua.TypeGuardError(kind: .userdata) }
             return value as! Self
         }
+
+        public var description: String { "Userdata" }
     }
 
-    open class LightUserdata: Lua.StoredValue, LuaValueRepresentable {
+    open class LightUserdata: Lua.StoredValue, LuaValueRepresentable, CustomStringConvertible {
         open var kind: Lua.Kind { return .lightUserdata }
 
         public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .lightUserdata else { throw Lua.TypeGuardError(kind: .lightUserdata) }
             return value as! Self
         }
+
+        public var description: String { "LightUserdata" }
     }
 
     open class CustomType<T: LuaCustomTypeInstance>: Table {
@@ -54,6 +58,8 @@ extension Lua {
 
         open var gc: ((T) -> Void)?
         open var eq: ((T, T) -> Bool)?
+
+        override public var description: String { "CustomType<\(T.luaTypeName())>" }
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             vm.createFunction { args in

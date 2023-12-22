@@ -1,7 +1,7 @@
 import CLua
 
 extension Lua {
-    open class Table: Lua.StoredValue, LuaValueRepresentable {
+    open class Table: Lua.StoredValue, LuaValueRepresentable, CustomStringConvertible {
         open var kind: Lua.Kind { return .table }
 
         open class func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
@@ -44,6 +44,13 @@ extension Lua {
             }
             vm.pop() // table
             return k
+        }
+
+        public var description: String {
+            "[\n" + self.keys().map {
+                "   \($0): \(self[$0])"
+            }.joined(separator: ",\n")
+            + "\n]"
         }
 
         open func becomeMetatableFor(_ thing: LuaValueRepresentable) {
