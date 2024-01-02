@@ -196,8 +196,7 @@ public struct Lua {
 
         public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             let f: @convention(block) (OpaquePointer) -> Int32 = { [weak self] _ in
-                if self == nil { return 0 }
-                let vm = self!
+                guard let vm = self else { return 0 }
 
                 // build args list
                 var args = [LuaValueRepresentable]()

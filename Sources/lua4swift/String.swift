@@ -6,6 +6,7 @@ extension String: LuaValueRepresentable {
     }
 
     public var kind: Lua.Kind { return .string }
+    public static var typeName: String { Lua.Kind.string.description }
 
     public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
         guard value.kind == .string else { throw Lua.TypeGuardError(kind: .string) }

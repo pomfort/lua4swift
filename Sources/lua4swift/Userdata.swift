@@ -23,6 +23,7 @@ extension Lua {
         }
 
         open var kind: Lua.Kind { return .userdata }
+        public static var typeName: String { Lua.Kind.userdata.description }
 
         public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .userdata else { throw Lua.TypeGuardError(kind: .userdata) }
@@ -44,6 +45,8 @@ extension Lua {
 
     open class LightUserdata: Lua.StoredValue, LuaValueRepresentable {
         open var kind: Lua.Kind { return .lightUserdata }
+        public static var typeName: String { Lua.Kind.lightUserdata.description }
+        public var description: String { Lua.Kind.lightUserdata.description }
 
         public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .lightUserdata else { throw Lua.TypeGuardError(kind: .lightUserdata) }
@@ -68,6 +71,7 @@ extension Lua {
         open var eq: ((T, T) -> Bool)?
 
         override public var description: String { Userdata.description(name: T.luaTypeName()) }
+        override public class var typeName: String { Userdata.description(name: T.luaTypeName()) }
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             vm.createFunction { args in

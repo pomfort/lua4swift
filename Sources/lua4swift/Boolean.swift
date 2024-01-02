@@ -11,4 +11,6 @@ extension Bool: LuaValueRepresentable {
         guard value.kind == .boolean else { throw Lua.TypeGuardError(kind: .boolean) }
         return value as! Bool
     }
+
+    public static var typeName: String { Lua.Kind.boolean.description }
 }

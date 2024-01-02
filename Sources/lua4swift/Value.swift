@@ -4,10 +4,7 @@ public protocol LuaValueRepresentable: CustomStringConvertible {
     func push(_ vm: Lua.VirtualMachine)
     var kind: Lua.Kind { get }
     static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self
-}
-
-extension LuaValueRepresentable {
-    public var description: String { self.kind.description }
+    static var typeName: String { get }
 }
 
 extension Lua {

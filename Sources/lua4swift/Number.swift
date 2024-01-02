@@ -3,6 +3,7 @@ import CLua
 extension Lua {
     public final class Number: Lua.StoredValue, LuaValueRepresentable {
         public var kind: Lua.Kind { return .number }
+        public static var typeName: String { Lua.Kind.number.description }
 
         public func toDouble() -> Double {
             push(vm)
@@ -42,6 +43,7 @@ extension Double: LuaValueRepresentable {
     }
 
     public var kind: Lua.Kind { return .number }
+    public static var typeName: String { "Double" }
 
     public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
         value.push(vm)
@@ -58,6 +60,7 @@ extension Int64: LuaValueRepresentable {
     }
 
     public var kind: Lua.Kind { return .number }
+    public static var typeName: String { "Int64" }
 
     public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
         value.push(vm)
@@ -74,6 +77,7 @@ extension Int: LuaValueRepresentable {
     }
 
     public var kind: Lua.Kind { return .number }
+    public static var typeName: String { "Int" }
 
     public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
         try Int(Int64.unwrap(vm, value))

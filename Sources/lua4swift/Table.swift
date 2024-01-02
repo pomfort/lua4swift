@@ -3,6 +3,7 @@ import CLua
 extension Lua {
     open class Table: Lua.StoredValue, LuaValueRepresentable {
         open var kind: Lua.Kind { return .table }
+        public class var typeName: String { Lua.Kind.table.description }
 
         open class func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .table else { throw Lua.TypeGuardError(kind: .table) }
@@ -50,7 +51,7 @@ extension Lua {
             "[\n" + self.keys().map {
                 let v = self[$0]
                 let t = v as? Table
-                return "   \($0): \(t.map { $0.description + "…" } ?? "\(v)")"
+                return "   \($0): \(t.map { $0.kind.description + "…" } ?? "\(v)")"
             }.joined(separator: ",\n")
             + "\n]"
         }

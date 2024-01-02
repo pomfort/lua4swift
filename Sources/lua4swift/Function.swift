@@ -42,6 +42,8 @@ extension Lua {
         }
 
         public var kind: Lua.Kind { return .function }
+        public static var typeName: String { Lua.Kind.function.description }
+        public var description: String { Lua.Kind.function.description }
 
         public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .function else { throw Lua.TypeGuardError(kind: .function) }
