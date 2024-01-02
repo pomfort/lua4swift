@@ -6,7 +6,7 @@ public protocol LuaCustomTypeInstance {
 }
 
 extension Lua {
-    open class Userdata: Lua.StoredValue, LuaValueRepresentable, CustomStringConvertible {
+    open class Userdata: Lua.StoredValue, LuaValueRepresentable {
         open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
             push(vm)
             let ptr = lua_touserdata(vm.state, -1)
@@ -32,15 +32,13 @@ extension Lua {
         public var description: String { "Userdata" }
     }
 
-    open class LightUserdata: Lua.StoredValue, LuaValueRepresentable, CustomStringConvertible {
+    open class LightUserdata: Lua.StoredValue, LuaValueRepresentable {
         open var kind: Lua.Kind { return .lightUserdata }
 
         public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .lightUserdata else { throw Lua.TypeGuardError(kind: .lightUserdata) }
             return value as! Self
         }
-
-        public var description: String { "LightUserdata" }
     }
 
     open class CustomType<T: LuaCustomTypeInstance>: Table {

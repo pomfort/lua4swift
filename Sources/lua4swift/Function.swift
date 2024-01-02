@@ -9,7 +9,7 @@ extension Lua {
         }
     }
 
-    open class Function: Lua.StoredValue, LuaValueRepresentable, CustomStringConvertible {
+    open class Function: Lua.StoredValue, LuaValueRepresentable {
         open func call(_ args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
             let debugTable = vm.globals["debug"] as! Table
             let messageHandler = debugTable["traceback"]
@@ -47,7 +47,5 @@ extension Lua {
             guard value.kind == .function else { throw Lua.TypeGuardError(kind: .function) }
             return value as! Self
         }
-
-        public var description: String { "Function" }
     }
 }

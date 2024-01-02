@@ -1,7 +1,7 @@
 import CLua
 
 extension Lua {
-    public final class Number: Lua.StoredValue, LuaValueRepresentable, CustomDebugStringConvertible {
+    public final class Number: Lua.StoredValue, LuaValueRepresentable {
         public var kind: Lua.Kind { return .number }
 
         public func toDouble() -> Double {
@@ -18,20 +18,15 @@ extension Lua {
             return v
         }
 
-        public var debugDescription: String {
-            push(vm)
-            let isInteger = lua_isinteger(vm.state, -1) != 0
-            vm.pop()
-
-            if isInteger { return toInteger().description }
-            else { return toDouble().description }
+        public var description: String {
+            if self.isInteger { return (toInteger() as LuaValueRepresentable).description }
+            else { return (toDouble() as LuaValueRepresentable).description }
         }
 
         public var isInteger: Bool {
             push(vm)
-            let isInteger = lua_isinteger(vm.state, -1) != 0
-            vm.pop()
-            return isInteger
+            defer { vm.pop() }
+            return lua_isinteger(vm.state, -1) != 0
         }
 
         public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Number {

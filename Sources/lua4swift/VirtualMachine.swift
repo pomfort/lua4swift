@@ -7,7 +7,7 @@ private let GlobalsTable = Int(LUA_RIDX_GLOBALS)
 public struct Lua {
     public typealias ErrorHandler = (String) -> Void
 
-    public enum Kind {
+    public enum Kind: CustomStringConvertible {
         case string
         case number
         case boolean
@@ -31,6 +31,21 @@ public struct Lua {
             case .thread: return LUA_TTHREAD
             case .nil: return LUA_TNIL
             case .none: return LUA_TNONE
+            }
+        }
+
+        public var description: String {
+            switch self {
+            case .string: return "String"
+            case .number: return "Lua.Number"
+            case .boolean: return "Bool"
+            case .function: return "Lua.Function"
+            case .table: return "Lua.Table"
+            case .userdata: return "Lua.Userdata"
+            case .lightUserdata: return "Lua.LightUserdata"
+            case .thread: return "Lua.Thread"
+            case .nil: return "Lua.Nil"
+            case .none: return "Lua.None"
             }
         }
     }
