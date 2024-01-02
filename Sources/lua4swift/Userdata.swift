@@ -29,7 +29,17 @@ extension Lua {
             return value as! Self
         }
 
-        public var description: String { "Userdata" }
+        fileprivate static func description(name: String) -> String { "Lua.CustomType<\(name)>" }
+        public var description: String { self.metatable.flatMap { $0["__name"] as? String }.map { Self.description(name: $0) } ?? self.kind.description }
+
+        private var metatable: Table? {
+            self.push(self.vm)
+            defer { self.vm.pop() }
+            if lua_getmetatable(self.vm.state, -1) == 1 {
+                return self.vm.popValue(-1) as? Table
+            }
+            return nil
+        }
     }
 
     open class LightUserdata: Lua.StoredValue, LuaValueRepresentable {
@@ -57,7 +67,7 @@ extension Lua {
         open var gc: ((T) -> Void)?
         open var eq: ((T, T) -> Bool)?
 
-        override public var description: String { "CustomType<\(T.luaTypeName())>" }
+        override public var description: String { Userdata.description(name: T.luaTypeName()) }
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             vm.createFunction { args in
