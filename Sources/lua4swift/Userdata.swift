@@ -61,7 +61,8 @@ extension Lua {
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             vm.createFunction { args in
-                try fn(Userdata.unwrap(self.vm, args[0]).toCustomType(), Array(args[1...]))
+                guard args.count > 0 else { throw Lua.MethodCallError() }
+                return try fn(Userdata.unwrap(self.vm, args[0]).toCustomType(), Array(args[1...]))
             }
         }
 

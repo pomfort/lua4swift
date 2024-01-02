@@ -22,6 +22,8 @@ extension Lua {
         }
     }
 
+    public struct MethodCallError: Swift.Error { }
+
     open class StoredValue: Equatable {
         fileprivate let registryLocation: Int
         internal unowned var vm: VirtualMachine
