@@ -190,7 +190,7 @@ public struct Lua {
             return try eval(function: fn, args: args)
         }
 
-        private func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
+        public func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
             try f.call(args)
         }
 
