@@ -49,5 +49,12 @@ extension Lua {
 
             return result
         }
+
+        public var metatable: Table? {
+            self.push(vm)
+            defer { vm.pop() }
+            guard lua_getmetatable(self.vm.state, -1) == 1 else { return nil }
+            return self.vm.popValue(-1) as? Table
+        }
     }
 }
