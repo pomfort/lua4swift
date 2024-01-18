@@ -63,40 +63,37 @@ extension Lua {
             vm.pop() // thing
         }
 
-        open func asTupleArray<K1: LuaValueRepresentable, V1: LuaValueRepresentable, K2: LuaValueRepresentable, V2: LuaValueRepresentable>(_ kfn: (K1) -> K2 = {$0 as! K2}, _ vfn: (V1) -> V2 = {$0 as! V2}) -> [(K2, V2)] {
-            var v = [(K2, V2)]()
+        private func asTupleArray() -> [(LuaValueRepresentable, LuaValueRepresentable)] {
+            var v = [(LuaValueRepresentable, LuaValueRepresentable)]()
             for key in keys() {
                 let val = self[key]
-                if key is K1 && val is V1 {
-                    v.append((kfn(key as! K1), vfn(val as! V1)))
-                }
+                v.append((key, val))
             }
             return v
         }
 
-        open func asDictionary<K1: LuaValueRepresentable, V1: LuaValueRepresentable, K2: LuaValueRepresentable, V2: LuaValueRepresentable>(_ kfn: (K1) -> K2 = {$0 as! K2}, _ vfn: (V1) -> V2 = {$0 as! V2}) -> [K2: V2] where K2: Hashable {
-            var v = [K2: V2]()
-            for (key, val) in asTupleArray(kfn, vfn) {
-                v[key] = val
+        public func asDictionary<K0, K>(_ kfn: (K0) -> K? = { $0 as? K }) -> [K: LuaValueRepresentable] where K0: LuaValueRepresentable, K: Hashable {
+            self.asTupleArray().reduce(into: [K: LuaValueRepresentable]()) {
+                guard let k0 = $1.0 as? K0, let k = kfn(k0) else { return }
+                $0[k] = $1.1
             }
-            return v
         }
 
-        open func asSequence<T: LuaValueRepresentable>() -> [T] {
+        open func asArray<T: LuaValueRepresentable>() -> [T]? {
             var sequence = [T]()
 
-            let dict: [Int64 : T] = asDictionary({ (k: Number) in k.toInteger() }, { $0 as T })
+            let dict: [Int64: LuaValueRepresentable] = asDictionary({ (k: Number) in k.toInteger() })
 
             // if it has no numeric keys, then it's empty; job well done, team, job well done.
             if dict.count == 0 { return sequence }
 
             // ensure table has no holes and keys start at 1
             let sortedKeys = dict.keys.sorted(by: <)
-            if [Int64](1...sortedKeys.last!) != sortedKeys { return sequence }
+            if [Int64](1...sortedKeys.last!) != sortedKeys { return nil }
 
             // append values to the array, in order
             for i in sortedKeys {
-                sequence.append(dict[i]!)
+                dict[i].flatMap { $0 as? T }.map { sequence.append($0) }
             }
 
             return sequence

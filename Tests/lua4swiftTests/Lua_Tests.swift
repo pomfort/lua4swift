@@ -35,7 +35,7 @@ class Lua_Tests: XCTestCase {
             let values = try vm.eval("return stringx.split('hello world', ' ')")
             XCTAssertEqual(values.count, 1)
             XCTAssert(values[0] is Lua.Table)
-            let array: [String] = (values[0] as! Lua.Table).asSequence()
+            let array: [String] = (values[0] as! Lua.Table).asArray()!
             XCTAssertEqual(array, ["hello", "world"])
         } catch {
             XCTFail(error.localizedDescription)
