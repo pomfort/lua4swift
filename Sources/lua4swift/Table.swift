@@ -79,8 +79,8 @@ extension Lua {
             }
         }
 
-        open func asArray<T: LuaValueRepresentable>() -> [T]? {
-            var sequence = [T]()
+        public func asArray() -> [any LuaValueRepresentable]? {
+            var sequence = [any LuaValueRepresentable]()
 
             let dict: [Int64: LuaValueRepresentable] = asDictionary({ (k: Number) in k.toInteger() })
 
@@ -93,10 +93,14 @@ extension Lua {
 
             // append values to the array, in order
             for i in sortedKeys {
-                dict[i].flatMap { $0 as? T }.map { sequence.append($0) }
+                dict[i].map { sequence.append($0) }
             }
 
             return sequence
+        }
+
+        public func asArray<T: LuaValueRepresentable>() -> [T]? {
+            self.asArray().map { $0.compactMap{ $0 as? T } }
         }
 
         func storeReference(_ v: LuaValueRepresentable) -> Int {
