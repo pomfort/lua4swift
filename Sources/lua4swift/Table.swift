@@ -63,7 +63,7 @@ extension Lua {
             vm.pop() // thing
         }
 
-        private func asTupleArray() -> [(LuaValueRepresentable, LuaValueRepresentable)] {
+        public func asTupleArray() -> [(LuaValueRepresentable, LuaValueRepresentable)] {
             var v = [(LuaValueRepresentable, LuaValueRepresentable)]()
             for key in keys() {
                 let val = self[key]
