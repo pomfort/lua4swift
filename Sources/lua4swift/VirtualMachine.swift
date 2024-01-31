@@ -5,8 +5,6 @@ internal let RegistryIndex = Int(-LUAI_MAXSTACK - 1000)
 private let GlobalsTable = Int(LUA_RIDX_GLOBALS)
 
 public struct Lua {
-    public typealias ErrorHandler = (String) -> Void
-
     public enum Kind: CustomStringConvertible {
         case string
         case number
@@ -51,10 +49,7 @@ public struct Lua {
     }
 
     open class VirtualMachine {
-
         public let state = luaL_newstate()
-
-        open var errorHandler: ErrorHandler? = { print("error: \($0)") }
 
         public init(openLibs: Bool = true) {
             if openLibs { luaL_openlibs(state) }
@@ -159,7 +154,6 @@ public struct Lua {
 
         internal func popError() -> String {
             let err = popValue(-1) as! String
-            if let fn = errorHandler { fn(err) }
             return err
         }
 
@@ -214,7 +208,6 @@ public struct Lua {
                     let e = (error as? LocalizedError)?.errorDescription ?? "Swift Error \(error)"
                     e.push(vm)
                     lua_error(vm.state)
-                    return 0 // uhh, we don't actually get here
                 }
             }
             let block: AnyObject = unsafeBitCast(f, to: AnyObject.self)
