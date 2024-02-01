@@ -114,7 +114,7 @@ public struct Lua {
             case .thread:
                 v = Thread(self)
             case .nil:
-                v = Nil()
+                v = Nil.nil
             default: break
             }
             pop()

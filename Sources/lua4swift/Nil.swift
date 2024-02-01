@@ -18,6 +18,7 @@ extension Lua {
             true
         }
 
+        private init() { }
         public static let `nil`: Nil = .init()
 
         public var description: String { (nil as Int?).debugDescription }
