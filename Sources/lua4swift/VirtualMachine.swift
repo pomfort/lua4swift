@@ -48,80 +48,80 @@ public struct Lua {
         }
     }
 
-    public class VirtualMachineOwner {
-        public let vm: VirtualMachine
+    public class VirtualMachine {
+        public let state: State
         internal var env: Table?
 
         public init(openLibs: Bool = true) {
-            let vm = VirtualMachine(openLibs: openLibs)
+            let state = State(openLibs: openLibs)
             let env = {
-                let env = vm.createTable(0, keyCapacity: 0)
-                let meta = vm.createTable(0, keyCapacity: 1)
-                meta["__index"] = vm.globals
+                let env = state.createTable(0, keyCapacity: 0)
+                let meta = state.createTable(0, keyCapacity: 1)
+                meta["__index"] = state.globals
                 meta.becomeMetatableFor(env)
                 return env
             }()
 
-            self.vm = vm
+            self.state = state
             self.env = env
-            self.vm.env = env
+            self.state.env = env
         }
 
         deinit {
             self.env = nil
-            luaC_fullgc(self.vm.state, 0)
+            luaC_fullgc(self.state.state, 0)
         }
 
         public func preloadModules(_ modules: UnsafeMutablePointer<luaL_Reg>) {
-            self.vm.preloadModules(modules)
+            self.state.preloadModules(modules)
         }
 
         public var globals: Table {
-            self.vm.globals
+            self.state.globals
         }
 
         public var registry: Table {
-            self.vm.registry
+            self.state.registry
         }
 
         public func createFunction(_ body: URL) throws -> Function {
-            try self.vm.createFunction(body)
+            try self.state.createFunction(body)
         }
 
         public func createFunction(_ body: String) throws -> Function {
-            try self.vm.createFunction(body)
+            try self.state.createFunction(body)
         }
 
         public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> LuaValueRepresentable) -> Function {
-            self.vm.createFunction {
+            self.state.createFunction {
                 try [fn($0)]
             }
         }
 
         public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> Void) -> Function {
-            self.vm.createFunction {
+            self.state.createFunction {
                 try fn($0)
                 return []
             }
         }
 
         public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
-            self.vm.createFunction(fn)
+            self.state.createFunction(fn)
         }
 
         public func createTable(_ sequenceCapacity: Int = 0, keyCapacity: Int = 0) -> Table {
-            self.vm.createTable(sequenceCapacity, keyCapacity: keyCapacity)
+            self.state.createTable(sequenceCapacity, keyCapacity: keyCapacity)
         }
 
         public func createUserdataMaybe<T: LuaCustomTypeInstance>(_ o: T?) -> Userdata? {
             if let u = o {
-                return self.vm.createUserdata(u)
+                return self.state.createUserdata(u)
             }
             return nil
         }
 
         public func createUserdata<T: LuaCustomTypeInstance>(_ o: T) -> Userdata {
-            self.vm.createUserdata(o)
+            self.state.createUserdata(o)
         }
 
         public func eval(_ url: URL, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
@@ -135,16 +135,16 @@ public struct Lua {
         }
 
         public func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
-            try self.vm.eval(function: f, args: args)
+            try self.state.eval(function: f, args: args)
         }
 
-        open func createCustomType<T>(_ setup: (CustomType<T>) -> Void) -> CustomType<T> {
-            self.vm.createCustomType(setup)
+        public func createCustomType<T>(_ setup: (CustomType<T>) -> Void) -> CustomType<T> {
+            self.state.createCustomType(setup)
         }
     }
 
-    public class VirtualMachine {
-        public let state = luaL_newstate()
+    public class State {
+        internal let state = luaL_newstate()
         weak internal var env: Table?
 
         fileprivate init(openLibs: Bool) {

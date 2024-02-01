@@ -5,7 +5,7 @@ import XCTest
 
 class Lua_Tests: XCTestCase {
     func testFundamentals() {
-        let vm = Lua.VirtualMachineOwner()
+        let vm = Lua.VirtualMachine()
         let table = vm.createTable()
         table[3] = "foo"
         XCTAssert(table[3] is String)
@@ -13,13 +13,13 @@ class Lua_Tests: XCTestCase {
     }
 
     func testStringX() {
-        let vm = Lua.VirtualMachineOwner()
+        let vm = Lua.VirtualMachine()
 
         let stringxLib = vm.createTable()
 
         stringxLib["split"] = vm.createFunction { [unowned vm] args in
-            let subject = try String.unwrap(vm.vm, args[0])
-            let separator = try String.unwrap(vm.vm, args[1])
+            let subject = try String.unwrap(vm.state, args[0])
+            let separator = try String.unwrap(vm.state, args[1])
             let fragments = subject.components(separatedBy: separator)
 
             let results = vm.createTable()
@@ -50,11 +50,11 @@ class Lua_Tests: XCTestCase {
             }
         }
 
-        let vm = Lua.VirtualMachineOwner()
+        let vm = Lua.VirtualMachine()
 
         let noteLib: Lua.CustomType<Note> = vm.createCustomType { type in
             type["setName"] = type.createMethod { [unowned vm] (self, args) -> Void in
-                let name = try String.unwrap(vm.vm, args[0])
+                let name = try String.unwrap(vm.state, args[0])
                 self.name = name
             }
             type["getName"] = type.createMethod { (self: Note, _) in
@@ -63,7 +63,7 @@ class Lua_Tests: XCTestCase {
         }
 
         noteLib["new"] = vm.createFunction { [unowned vm] args in
-            let name = try String.unwrap(vm.vm, args[0])
+            let name = try String.unwrap(vm.state, args[0])
             let note = Note()
             note.name = name
             return vm.createUserdata(note)

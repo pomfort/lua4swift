@@ -1,9 +1,9 @@
 import CLua
 
 public protocol LuaValueRepresentable: CustomStringConvertible {
-    func push(_ vm: Lua.VirtualMachine)
+    func push(_ vm: Lua.State)
     var kind: Lua.Kind { get }
-    static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self
+    static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self
     static var typeName: String { get }
 }
 
@@ -23,9 +23,9 @@ extension Lua {
 
     open class StoredValue: Equatable {
         fileprivate let registryLocation: Int
-        internal unowned var vm: VirtualMachine
+        internal unowned var vm: State
 
-        internal init(_ vm: VirtualMachine) {
+        internal init(_ vm: State) {
             self.vm = vm
             vm.pushFromStack(-1)
             registryLocation = vm.ref(RegistryIndex)
@@ -35,7 +35,7 @@ extension Lua {
             vm.unref(RegistryIndex, registryLocation)
         }
 
-        open func push(_ vm: VirtualMachine) {
+        open func push(_ vm: State) {
             vm.rawGet(tablePosition: RegistryIndex, index: registryLocation)
         }
 

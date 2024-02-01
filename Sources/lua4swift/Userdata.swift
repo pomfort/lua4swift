@@ -30,7 +30,7 @@ extension Lua {
             return value as! Self
         }
 
-        public static func unwrap(_: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        public static func unwrap(_: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
             try Self.unwrap(value)
         }
 
@@ -43,14 +43,14 @@ extension Lua {
         public static var typeName: String { Lua.Kind.lightUserdata.description }
         public var description: String { Lua.Kind.lightUserdata.description }
 
-        public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .lightUserdata else { throw Lua.TypeGuardError(kind: .lightUserdata) }
             return value as! Self
         }
     }
 
     open class CustomType<T: LuaCustomTypeInstance>: Table {
-        override public class func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        override public class func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
             value.push(vm)
             let isLegit = luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil
             vm.pop()
@@ -58,7 +58,7 @@ extension Lua {
             return value as! Self
         }
 
-        override internal init(_ vm: Lua.VirtualMachine) {
+        override internal init(_ vm: Lua.State) {
             super.init(vm)
         }
 

@@ -5,7 +5,7 @@ extension Lua {
         open var kind: Lua.Kind { return .table }
         public class var typeName: String { Lua.Kind.table.description }
 
-        open class func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        open class func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .table else { throw Lua.TypeGuardError(kind: .table) }
             return value as! Self
         }

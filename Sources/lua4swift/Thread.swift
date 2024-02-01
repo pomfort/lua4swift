@@ -6,7 +6,7 @@ extension Lua {
         public static var typeName: String { Lua.Kind.thread.description }
         public var description: String { Lua.Kind.thread.description }
 
-        public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Thread {
+        public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Thread {
             guard value.kind == .thread else { throw Lua.TypeGuardError(kind: .thread) }
             return value as! Thread
         }
