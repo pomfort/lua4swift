@@ -248,7 +248,8 @@ public struct Lua {
             lib["__name"] = T.luaTypeName()
 
             let gc = lib.gc
-            lib["__gc"] = createFunction { args in
+            lib["__gc"] = createFunction { [weak self] args in
+                guard let self else { return [] }
                 let ud = try Userdata.unwrap(self, args[0])
                 (ud.userdataPointer() as UnsafeMutablePointer<T>).deinitialize(count: 1)
                 let o: T = ud.toCustomType()
@@ -257,7 +258,8 @@ public struct Lua {
             }
 
             if let eq = lib.eq {
-                lib["__eq"] = createFunction { args in
+                lib["__eq"] = createFunction { [weak self] args in
+                    guard let self else { return [false] }
                     let a: T = try Userdata.unwrap(self, args[0]).toCustomType()
                     let b: T = try Userdata.unwrap(self, args[1]).toCustomType()
                     return [eq(a, b)]
