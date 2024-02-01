@@ -5,7 +5,7 @@ import XCTest
 
 class Lua_Tests: XCTestCase {
     func testFundamentals() {
-        let vm = Lua.VirtualMachine()
+        let vm = Lua.VirtualMachineOwner()
         let table = vm.createTable()
         table[3] = "foo"
         XCTAssert(table[3] is String)
@@ -13,13 +13,13 @@ class Lua_Tests: XCTestCase {
     }
 
     func testStringX() {
-        let vm = Lua.VirtualMachine()
+        let vm = Lua.VirtualMachineOwner()
 
         let stringxLib = vm.createTable()
 
         stringxLib["split"] = vm.createFunction { [unowned vm] args in
-            let subject = try String.unwrap(vm, args[0])
-            let separator = try String.unwrap(vm, args[1])
+            let subject = try String.unwrap(vm.vm, args[0])
+            let separator = try String.unwrap(vm.vm, args[1])
             let fragments = subject.components(separatedBy: separator)
 
             let results = vm.createTable()
@@ -50,11 +50,11 @@ class Lua_Tests: XCTestCase {
             }
         }
 
-        let vm = Lua.VirtualMachine()
+        let vm = Lua.VirtualMachineOwner()
 
         let noteLib: Lua.CustomType<Note> = vm.createCustomType { type in
             type["setName"] = type.createMethod { [unowned vm] (self, args) -> Void in
-                let name = try String.unwrap(vm, args[0])
+                let name = try String.unwrap(vm.vm, args[0])
                 self.name = name
             }
             type["getName"] = type.createMethod { (self: Note, _) in
@@ -63,7 +63,7 @@ class Lua_Tests: XCTestCase {
         }
 
         noteLib["new"] = vm.createFunction { [unowned vm] args in
-            let name = try String.unwrap(vm, args[0])
+            let name = try String.unwrap(vm.vm, args[0])
             let note = Note()
             note.name = name
             return vm.createUserdata(note)
@@ -73,12 +73,12 @@ class Lua_Tests: XCTestCase {
         vm.globals["note"] = noteLib
 
         _ = try! vm.eval("myNote = note.new('a custom note')")
-        XCTAssert(vm.globals["myNote"] is Lua.Userdata)
+        XCTAssert(vm.env?["myNote"] is Lua.Userdata)
 
         // extract the note
         // and see if the name is the same
 
-        let myNote: Note = (vm.globals["myNote"] as! Lua.Userdata).toCustomType()
+        let myNote: Note = (vm.env?["myNote"] as! Lua.Userdata).toCustomType()
         XCTAssert(myNote.name == "a custom note")
 
         // This is just to highlight changes in Swift

@@ -48,18 +48,112 @@ public struct Lua {
         }
     }
 
-    open class VirtualMachine {
-        public let state = luaL_newstate()
+    public class VirtualMachineOwner {
+        public let vm: VirtualMachine
+        internal var env: Table?
 
         public init(openLibs: Bool = true) {
-            if openLibs { luaL_openlibs(state) }
+            let vm = VirtualMachine(openLibs: openLibs)
+            let env = {
+                let env = vm.createTable(0, keyCapacity: 0)
+                let meta = vm.createTable(0, keyCapacity: 1)
+                meta["__index"] = vm.globals
+                meta.becomeMetatableFor(env)
+                return env
+            }()
+
+            self.vm = vm
+            self.env = env
+            self.vm.env = env
         }
 
         deinit {
-            lua_close(state)
+            self.env = nil
+            luaC_fullgc(self.vm.state, 0)
         }
 
         public func preloadModules(_ modules: UnsafeMutablePointer<luaL_Reg>) {
+            self.vm.preloadModules(modules)
+        }
+
+        public var globals: Table {
+            self.vm.globals
+        }
+
+        public var registry: Table {
+            self.vm.registry
+        }
+
+        public func createFunction(_ body: URL) throws -> Function {
+            try self.vm.createFunction(body)
+        }
+
+        public func createFunction(_ body: String) throws -> Function {
+            try self.vm.createFunction(body)
+        }
+
+        public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> LuaValueRepresentable) -> Function {
+            self.vm.createFunction {
+                try [fn($0)]
+            }
+        }
+
+        public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> Void) -> Function {
+            self.vm.createFunction {
+                try fn($0)
+                return []
+            }
+        }
+
+        public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
+            self.vm.createFunction(fn)
+        }
+
+        public func createTable(_ sequenceCapacity: Int = 0, keyCapacity: Int = 0) -> Table {
+            self.vm.createTable(sequenceCapacity, keyCapacity: keyCapacity)
+        }
+
+        public func createUserdataMaybe<T: LuaCustomTypeInstance>(_ o: T?) -> Userdata? {
+            if let u = o {
+                return self.vm.createUserdata(u)
+            }
+            return nil
+        }
+
+        public func createUserdata<T: LuaCustomTypeInstance>(_ o: T) -> Userdata {
+            self.vm.createUserdata(o)
+        }
+
+        public func eval(_ url: URL, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
+            let fn = try createFunction(url)
+            return try eval(function: fn, args: args)
+        }
+
+        public func eval(_ str: String, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
+            let fn = try createFunction(str)
+            return try eval(function: fn, args: args)
+        }
+
+        public func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
+            try self.vm.eval(function: f, args: args)
+        }
+
+        open func createCustomType<T>(_ setup: (CustomType<T>) -> Void) -> CustomType<T> {
+            self.vm.createCustomType(setup)
+        }
+    }
+
+    public class VirtualMachine {
+        public let state = luaL_newstate()
+        weak internal var env: Table?
+
+        fileprivate init(openLibs: Bool) {
+            if openLibs {
+                luaL_openlibs(state)
+            }
+        }
+
+        fileprivate func preloadModules(_ modules: UnsafeMutablePointer<luaL_Reg>) {
             lua_getglobal(state, "package")
             lua_getfield(state, -1, "preload");
 
@@ -121,17 +215,17 @@ public struct Lua {
             return v
         }
 
-        open var globals: Table {
+        internal var globals: Table {
             rawGet(tablePosition: RegistryIndex, index: GlobalsTable)
             return popValue(-1) as! Table
         }
 
-        open var registry: Table {
+        fileprivate var registry: Table {
             pushFromStack(RegistryIndex)
             return popValue(-1) as! Table
         }
 
-        open func createFunction(_ body: URL) throws -> Function {
+        fileprivate func createFunction(_ body: URL) throws -> Function {
             if luaL_loadfilex(state, body.path, nil) == LUA_OK {
                 return popValue(-1) as! Function
             } else {
@@ -139,7 +233,7 @@ public struct Lua {
             }
         }
 
-        open func createFunction(_ body: String) throws -> Function {
+        fileprivate func createFunction(_ body: String) throws -> Function {
             if luaL_loadstring(state, body.cString(using: .utf8)) == LUA_OK {
                 return popValue(-1) as! Function
             } else {
@@ -147,7 +241,7 @@ public struct Lua {
             }
         }
 
-        open func createTable(_ sequenceCapacity: Int = 0, keyCapacity: Int = 0) -> Table {
+        fileprivate func createTable(_ sequenceCapacity: Int, keyCapacity: Int) -> Table {
             lua_createtable(state, Int32(sequenceCapacity), Int32(keyCapacity))
             return popValue(-1) as! Table
         }
@@ -157,14 +251,7 @@ public struct Lua {
             return err
         }
 
-        open func createUserdataMaybe<T: LuaCustomTypeInstance>(_ o: T?) -> Userdata? {
-            if let u = o {
-                return createUserdata(u)
-            }
-            return nil
-        }
-
-        open func createUserdata<T: LuaCustomTypeInstance>(_ o: T) -> Userdata {
+        fileprivate func createUserdata<T: LuaCustomTypeInstance>(_ o: T) -> Userdata {
             let userdata = lua_newuserdatauv(state, MemoryLayout<T>.size, 1) // this both pushes ptr onto stack and returns it
 
             let ptr = userdata!.bindMemory(to: T.self, capacity: 1)
@@ -174,21 +261,11 @@ public struct Lua {
             return popValue(-1) as! Userdata // this pops ptr off stack
         }
 
-        open func eval(_ url: URL, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
-            let fn = try createFunction(url)
-            return try eval(function: fn, args: args)
-        }
-
-        open func eval(_ str: String, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
-            let fn = try createFunction(str)
-            return try eval(function: fn, args: args)
-        }
-
-        public func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
+        fileprivate func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
             try f.call(args)
         }
 
-        public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
+        internal func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             let f: @convention(block) (OpaquePointer) -> Int32 = { [weak self] _ in
                 guard let vm = self else { return 0 }
 
@@ -218,24 +295,11 @@ public struct Lua {
             return popValue(-1) as! Function
         }
 
-        public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> LuaValueRepresentable) -> Function {
-            self.createFunction {
-                try [fn($0)]
-            }
-        }
-
-        public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> Void) -> Function {
-            self.createFunction {
-                try fn($0)
-                return []
-            }
-        }
-
         fileprivate func argError(_ expectedType: String, at argPosition: Int) {
             luaL_typeerror(state, Int32(argPosition), expectedType.cString(using: .utf8))
         }
 
-        open func createCustomType<T>(_ setup: (CustomType<T>) -> Void) -> CustomType<T> {
+        fileprivate func createCustomType<T>(_ setup: (CustomType<T>) -> Void) -> CustomType<T> {
             lua_createtable(state, 0, 0)
             let lib = CustomType<T>(self)
             pop()
@@ -249,11 +313,12 @@ public struct Lua {
 
             let gc = lib.gc
             lib["__gc"] = createFunction { [weak self] args in
-                guard let self else { return [] }
-                let ud = try Userdata.unwrap(self, args[0])
+                _ = self
+                let ud = try Userdata.unwrap(args[0])
+                if let gc {
+                    gc(ud.toCustomType())
+                }
                 (ud.userdataPointer() as UnsafeMutablePointer<T>).deinitialize(count: 1)
-                let o: T = ud.toCustomType()
-                gc?(o)
                 return []
             }
 

@@ -10,14 +10,28 @@ extension Lua {
     }
 
     open class Function: Lua.StoredValue, LuaValueRepresentable {
+        private func set(env: Table?) {
+            guard let env else {
+                assert(false, "no environment")
+                return
+            }
+            env.push(vm)
+            lua_setupvalue(vm.state, -2, 1)
+        }
+
         open func call(_ args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
+            defer { 
+                luaC_fullgc(vm.state, 0)
+            }
             let debugTable = vm.globals["debug"] as! Table
             let messageHandler = debugTable["traceback"]
 
             let originalStackTop = vm.stackSize()
 
             messageHandler.push(vm)
-            push(vm)
+            self.push(vm)
+            self.set(env: vm.env)
+
             for arg in args {
                 arg.push(vm)
             }

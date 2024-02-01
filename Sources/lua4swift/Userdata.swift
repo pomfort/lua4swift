@@ -25,9 +25,13 @@ extension Lua {
         open var kind: Lua.Kind { return .userdata }
         public static var typeName: String { Lua.Kind.userdata.description }
 
-        public static func unwrap(_ vm: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+        internal static func unwrap(_ value: LuaValueRepresentable) throws -> Self {
             guard value.kind == .userdata else { throw Lua.TypeGuardError(kind: .userdata) }
             return value as! Self
+        }
+
+        public static func unwrap(_: Lua.VirtualMachine, _ value: LuaValueRepresentable) throws -> Self {
+            try Self.unwrap(value)
         }
 
         fileprivate static func description(name: String) -> String { "Lua.CustomType<\(name)>" }
