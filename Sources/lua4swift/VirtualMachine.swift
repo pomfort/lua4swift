@@ -241,7 +241,7 @@ public struct Lua {
             }
         }
 
-        fileprivate func createTable(_ sequenceCapacity: Int, keyCapacity: Int) -> Table {
+        public func createTable(_ sequenceCapacity: Int, keyCapacity: Int) -> Table {
             lua_createtable(state, Int32(sequenceCapacity), Int32(keyCapacity))
             return popValue(-1) as! Table
         }
