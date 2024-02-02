@@ -1,15 +1,7 @@
 import CLua
 
 extension Lua {
-    open class Table: Lua.StoredValue, LuaValueRepresentable {
-        open var kind: Lua.Kind { return .table }
-        public class var typeName: String { Lua.Kind.table.description }
-
-        open class func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
-            guard value.kind == .table else { throw Lua.TypeGuardError(kind: .table) }
-            return value as! Self
-        }
-
+    open class Table: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping {
         open subscript(key: LuaValueRepresentable) -> LuaValueRepresentable {
             get {
                 push(vm)
@@ -50,8 +42,8 @@ extension Lua {
         public var description: String {
             "[\n" + self.keys().map {
                 let v = self[$0]
-                let t = v as? Table
-                return "   \($0): \(t.map { $0.kind.description + "…" } ?? "\(v)")"
+                let ist = v is Table
+                return "   \($0): \(ist ? Table.typeName + "…" : "\(v)")"
             }.joined(separator: ",\n")
             + "\n]"
         }
@@ -82,7 +74,7 @@ extension Lua {
         public func asArray() -> [any LuaValueRepresentable]? {
             var sequence = [any LuaValueRepresentable]()
 
-            let dict: [Int64: LuaValueRepresentable] = asDictionary({ (k: Number) in k.toInteger() })
+            let dict: [Int64: LuaValueRepresentable] = asDictionary({ (k: Int64) in k })
 
             // if it has no numeric keys, then it's empty; job well done, team, job well done.
             if dict.count == 0 { return sequence }

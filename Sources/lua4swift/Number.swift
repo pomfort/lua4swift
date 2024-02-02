@@ -1,79 +1,19 @@
 import CLua
 
-extension Lua {
-    public final class Number: Lua.StoredValue, LuaValueRepresentable {
-        public var kind: Lua.Kind { return .number }
-        public static var typeName: String { Lua.Kind.number.description }
-
-        public func toDouble() -> Double {
-            push(vm)
-            let v = lua_tonumberx(vm.state, -1, nil)
-            vm.pop()
-            return v
-        }
-
-        public func toInteger() -> Int64 {
-            push(vm)
-            let v = lua_tointegerx(vm.state, -1, nil)
-            vm.pop()
-            return v
-        }
-
-        public var description: String {
-            if self.isInteger { return (toInteger() as LuaValueRepresentable).description }
-            else { return (toDouble() as LuaValueRepresentable).description }
-        }
-
-        public var isInteger: Bool {
-            push(vm)
-            defer { vm.pop() }
-            return lua_isinteger(vm.state, -1) == 1
-        }
-
-        public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Number {
-            guard value.kind == .number else { throw Lua.TypeGuardError(kind: .number) }
-            return value as! Number
-        }
-    }
-}
-
-extension Double: LuaValueRepresentable {
+extension Double: LuaValueRepresentable, SimpleUnwrapping {
     public func push(_ vm: Lua.State) {
         lua_pushnumber(vm.state, self)
     }
-
-    public var kind: Lua.Kind { return .number }
-    public static var typeName: String { "Double" }
-
-    public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
-        try Lua.Number.unwrap(vm, value).toDouble()
-    }
 }
 
-extension Int64: LuaValueRepresentable {
+extension Int64: LuaValueRepresentable, SimpleUnwrapping {
     public func push(_ vm: Lua.State) {
         lua_pushinteger(vm.state, self)
     }
-
-    public var kind: Lua.Kind { return .number }
-    public static var typeName: String { "Int64" }
-
-    public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
-        let n = try Lua.Number.unwrap(vm, value)
-        guard n.isInteger else { throw Lua.TypeGuardError(type: "Int64") }
-        return n.toInteger()
-    }
 }
 
-extension Int: LuaValueRepresentable {
+extension Int: LuaValueRepresentable, SimpleUnwrapping {
     public func push(_ vm: Lua.State) {
         lua_pushinteger(vm.state, Int64(self))
-    }
-
-    public var kind: Lua.Kind { return .number }
-    public static var typeName: String { "Int" }
-
-    public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
-        try Int(Int64.unwrap(vm, value))
     }
 }

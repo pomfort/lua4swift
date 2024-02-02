@@ -1,16 +1,7 @@
 import CLua
 
-extension Bool: LuaValueRepresentable {
+extension Bool: LuaValueRepresentable, SimpleUnwrapping {
     public func push(_ vm: Lua.State) {
         lua_pushboolean(vm.state, self ? 1 : 0)
     }
-
-    public var kind: Lua.Kind { return .boolean }
-
-    public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
-        guard value.kind == .boolean else { throw Lua.TypeGuardError(kind: .boolean) }
-        return value as! Bool
-    }
-
-    public static var typeName: String { Lua.Kind.boolean.description }
 }

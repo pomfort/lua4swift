@@ -5,49 +5,6 @@ internal let RegistryIndex = Int(-LUAI_MAXSTACK - 1000)
 private let GlobalsTable = Int(LUA_RIDX_GLOBALS)
 
 public struct Lua {
-    public enum Kind: CustomStringConvertible {
-        case string
-        case number
-        case boolean
-        case function
-        case table
-        case userdata
-        case lightUserdata
-        case thread
-        case `nil`
-        case none
-
-        internal func luaType() -> Int32 {
-            switch self {
-            case .string: return LUA_TSTRING
-            case .number: return LUA_TNUMBER
-            case .boolean: return LUA_TBOOLEAN
-            case .function: return LUA_TFUNCTION
-            case .table: return LUA_TTABLE
-            case .userdata: return LUA_TUSERDATA
-            case .lightUserdata: return LUA_TLIGHTUSERDATA
-            case .thread: return LUA_TTHREAD
-            case .nil: return LUA_TNIL
-            case .none: return LUA_TNONE
-            }
-        }
-
-        public var description: String {
-            switch self {
-            case .string: return "String"
-            case .number: return "Lua.Number"
-            case .boolean: return "Bool"
-            case .function: return "Lua.Function"
-            case .table: return "Lua.Table"
-            case .userdata: return "Lua.Userdata"
-            case .lightUserdata: return "Lua.LightUserdata"
-            case .thread: return "Lua.Thread"
-            case .nil: return "Lua.Nil"
-            case .none: return "Lua.None"
-            }
-        }
-    }
-
     public class VirtualMachine {
         public let state: State
         internal var env: Table?
@@ -161,50 +118,38 @@ public struct Lua {
             lua_settop(state, -(2)-1)
         }
 
-        internal func kind(_ pos: Int) -> Kind {
-            switch lua_type(state, Int32(pos)) {
-            case LUA_TSTRING: return .string
-            case LUA_TNUMBER: return .number
-            case LUA_TBOOLEAN: return .boolean
-            case LUA_TFUNCTION: return .function
-            case LUA_TTABLE: return .table
-            case LUA_TUSERDATA: return .userdata
-            case LUA_TLIGHTUSERDATA: return .lightUserdata
-            case LUA_TTHREAD: return .thread
-            case LUA_TNIL: return .nil
-            default: return .none
-            }
-        }
-
         // pops the value off the stack completely and returns it
         internal func popValue(_ pos: Int) -> LuaValueRepresentable? {
             moveToStackTop(pos)
-            var v: LuaValueRepresentable?
-            switch kind(-1) {
-            case .string:
+            defer { pop() }
+            switch lua_type(state, -1) {
+            case LUA_TSTRING:
                 var len: Int = 0
                 let str = lua_tolstring(state, -1, &len)
-                v = String(cString: str!)
-            case .number:
-                v = Number(self)
-            case .boolean:
-                v = lua_toboolean(state, -1) == 1 ? true : false
-            case .function:
-                v = Function(self)
-            case .table:
-                v = Table(self)
-            case .userdata:
-                v = Userdata(self)
-            case .lightUserdata:
-                v = LightUserdata(self)
-            case .thread:
-                v = Thread(self)
-            case .nil:
-                v = Nil.nil
-            default: break
+                return String(cString: str!)
+            case LUA_TNUMBER:
+                if lua_isinteger(state, -1) == 1 {
+                    return lua_tointegerx(state, -1, nil)
+                } else {
+                    return lua_tonumberx(state, -1, nil)
+                }
+            case LUA_TBOOLEAN:
+                return lua_toboolean(state, -1) == 1 ? true : false
+            case LUA_TFUNCTION:
+                return Function(self)
+            case LUA_TTABLE:
+                return Table(self)
+            case LUA_TUSERDATA:
+                return Userdata(self)
+            case LUA_TLIGHTUSERDATA:
+                return LightUserdata(self)
+            case LUA_TTHREAD:
+                return Thread(self)
+            case LUA_TNIL:
+                return Nil.nil
+            default:
+                return nil
             }
-            pop()
-            return v
         }
 
         internal var globals: Table {

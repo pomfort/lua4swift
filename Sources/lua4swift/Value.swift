@@ -1,19 +1,31 @@
 import CLua
 
-public protocol LuaValueRepresentable: CustomStringConvertible {
+public protocol LuaValueRepresentable {
     func push(_ vm: Lua.State)
-    var kind: Lua.Kind { get }
     static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self
     static var typeName: String { get }
+}
+
+extension LuaValueRepresentable {
+    public static var typeName: String { String(describing: Self.self) }
+}
+
+internal protocol SimpleUnwrapping: LuaValueRepresentable { }
+
+extension SimpleUnwrapping {
+    internal static func unwrap(_ value: LuaValueRepresentable) throws -> Self {
+        guard let v = value as? Self else { throw Lua.TypeGuardError(type: Self.typeName) }
+        return v
+    }
+
+    public static func unwrap(_: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
+        try self.unwrap(value)
+    }
 }
 
 extension Lua {
     public struct TypeGuardError: Swift.Error {
         public let type: String
-
-        init(kind: Kind) {
-            self.type = kind.description
-        }
         public init(type: String) {
             self.type = type
         }

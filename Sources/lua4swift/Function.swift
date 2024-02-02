@@ -9,7 +9,7 @@ extension Lua {
         }
     }
 
-    open class Function: Lua.StoredValue, LuaValueRepresentable {
+    open class Function: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping {
         private func set(env: Table?) {
             guard let env else {
                 assert(false, "no environment")
@@ -53,15 +53,6 @@ extension Lua {
                 let err = vm.popError()
                 throw Lua.Error(err)
             }
-        }
-
-        public var kind: Lua.Kind { return .function }
-        public static var typeName: String { Lua.Kind.function.description }
-        public var description: String { Lua.Kind.function.description }
-
-        public static func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
-            guard value.kind == .function else { throw Lua.TypeGuardError(kind: .function) }
-            return value as! Self
         }
     }
 }
