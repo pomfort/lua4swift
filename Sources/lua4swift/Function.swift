@@ -19,8 +19,8 @@ extension Lua {
             lua_setupvalue(vm.state, -2, 1)
         }
 
-        open func call(_ args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
-            defer { 
+        internal func call(_ args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
+            defer {
                 luaC_fullgc(vm.state, 0)
             }
             let debugTable = vm.globals["debug"] as! Table

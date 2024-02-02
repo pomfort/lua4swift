@@ -84,14 +84,6 @@ public struct Lua {
             self.state.registry
         }
 
-        public func createFunction(_ body: URL) throws -> Function {
-            try self.state.createFunction(body)
-        }
-
-        public func createFunction(_ body: String) throws -> Function {
-            try self.state.createFunction(body)
-        }
-
         public func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> LuaValueRepresentable) -> Function {
             self.state.createFunction {
                 try [fn($0)]
@@ -125,12 +117,12 @@ public struct Lua {
         }
 
         public func eval(_ url: URL, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
-            let fn = try createFunction(url)
+            let fn = try state.createFunction(url)
             return try eval(function: fn, args: args)
         }
 
         public func eval(_ str: String, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
-            let fn = try createFunction(str)
+            let fn = try state.createFunction(str)
             return try eval(function: fn, args: args)
         }
 
