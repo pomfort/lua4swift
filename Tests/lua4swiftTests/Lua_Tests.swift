@@ -98,4 +98,38 @@ class Lua_Tests: XCTestCase {
         _ = try! vm.eval("myNote:setName('odd')")
         XCTAssert(myNote.name == "odd")
     }
+
+    func testLifetime() throws {
+        class LT: LuaCustomTypeInstance {
+            static var deinitCount = 0
+
+            static func luaTypeName() -> String {
+                return "LifeThreateningLifestyles"
+            }
+
+            deinit {
+                Self.deinitCount += 1
+            }
+        }
+
+        try {
+            let vm = Lua.VirtualMachine()
+            let lib: Lua.CustomType<LT> = vm.createCustomType { _ in }
+
+            lib["new"] = vm.createFunction { [unowned vm] _ in
+                _ = vm
+                let l = LT()
+                return vm.createUserdata(l)
+            }
+
+            vm.globals["LT"] = lib
+
+            _ = try vm.eval("""
+                local l = LT.new()
+                global = LT.new()
+            """)
+        }()
+
+        XCTAssertEqual(LT.deinitCount, 2)
+    }
 }
