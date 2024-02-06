@@ -23,7 +23,7 @@ extension Lua {
             defer {
                 luaC_fullgc(vm.state, 0)
             }
-            let debugTable = vm.globals["debug"] as! Table
+            let debugTable = vm.globals["debug"] as! Lua.Table
             let messageHandler = debugTable["traceback"]
 
             let originalStackTop = vm.stackSize()
