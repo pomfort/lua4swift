@@ -7,7 +7,7 @@ private let GlobalsTable = Int(LUA_RIDX_GLOBALS)
 public struct Lua {
     public class VirtualMachine {
         public let state: State
-        internal var env: Table?
+        public internal(set) var env: Table?
 
         public init(openLibs: Bool = true) {
             let state = State(openLibs: openLibs)
