@@ -1,7 +1,7 @@
 import CLua
 
 extension Lua {
-    open class Table: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping {
+    open class Table: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping, CustomStringConvertible {
         open subscript(key: LuaValueRepresentable) -> LuaValueRepresentable {
             get {
                 push(vm)
@@ -39,13 +39,32 @@ extension Lua {
             return k
         }
 
+        private static func keySort(_ lhs: LuaValueRepresentable, _ rhs: LuaValueRepresentable) -> Bool {
+            switch (lhs, rhs) {
+            case (let l as Int64, let r as Int64):
+                l < r
+            case (is Int64, _):
+                false
+            case (_, is Int64):
+                true
+            case (let l as String, let r as String):
+                l < r
+            case (is String, _):
+                false
+            case (_, is String):
+                true
+            default:
+                false
+            }
+        }
+
         public var description: String {
-            "[\n" + self.keys().map {
+            "{\n" + self.keys().sorted(by: Self.keySort).map {
                 let v = self[$0]
                 let ist = v is Table
-                return "   \($0): \(ist ? Table.typeName + "…" : "\(v)")"
+                return "   \($0)= \(ist ? Table.typeName + "…" : "\(v)")"
             }.joined(separator: ",\n")
-            + "\n]"
+            + "\n}"
         }
 
         open func becomeMetatableFor(_ thing: LuaValueRepresentable) {

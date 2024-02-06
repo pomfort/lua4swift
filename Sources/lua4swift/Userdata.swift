@@ -6,7 +6,7 @@ public protocol LuaCustomTypeInstance {
 }
 
 extension Lua {
-    open class Userdata: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping {
+    open class Userdata: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping, CustomStringConvertible {
         open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
             push(vm)
             let ptr = lua_touserdata(vm.state, -1)
@@ -20,6 +20,11 @@ extension Lua {
 
         open func toAny() -> Any {
             return userdataPointer().pointee
+        }
+
+        fileprivate static func description(name: String) -> String { "Lua.CustomType<\(name)>" }
+        public var description: String { 
+            self.metatable.flatMap { $0["__name"] as? String }.map { Self.description(name: $0) } ?? String(describing: Self.self)
         }
     }
 
@@ -55,6 +60,10 @@ extension Lua {
                 try fn($0, $1)
                 return []
             }
+        }
+
+        override public var description: String {
+            Userdata.description(name: Self.typeName)
         }
     }
 }
