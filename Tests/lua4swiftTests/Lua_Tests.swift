@@ -132,4 +132,34 @@ class Lua_Tests: XCTestCase {
 
         XCTAssertEqual(LT.deinitCount, 2)
     }
+
+    func testSetEnv() throws {
+        class T: LuaCustomTypeInstance {
+            static func luaTypeName() -> String {
+                return "T"
+            }
+        }
+
+        let vm = Lua.VirtualMachine()
+        let lib: Lua.CustomType<T> = vm.createCustomType { t in
+            t["callback"] = t.createMethod { (self, args) -> Void in
+                let fx = try Lua.Function.unwrap(args[0])
+                _ = try fx.call([])
+            }
+        }
+
+        lib["new"] = vm.createFunction { [unowned vm] _ in
+            _ = vm
+            let l = T()
+            return vm.createUserdata(l)
+        }
+
+        vm.globals["T"] = lib
+
+        _ = try vm.eval("""
+            local l = T.new()
+            l:callback(function ()
+            end)
+        """)
+    }
 }

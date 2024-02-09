@@ -10,11 +10,19 @@ extension Lua {
     }
 
     open class Function: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping {
+        private var capturesEnv: Bool {
+            guard let _envname = lua_getupvalue(vm.state, -1, 1) else { return false }
+            vm.pop()
+            let envname = String(cString: _envname)
+            return envname == "_ENV"
+        }
+
         private func set(env: Table?) {
             guard let env else {
                 assert(false, "no environment")
                 return
             }
+            guard self.capturesEnv else { return }
             env.push(vm)
             lua_setupvalue(vm.state, -2, 1)
         }
