@@ -35,7 +35,7 @@ extension Lua {
             value.push(vm)
             let isLegit = luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil
             vm.pop()
-            guard isLegit else { throw Lua.TypeGuardError(type: T.luaTypeName()) }
+            guard isLegit else { throw Lua.Error.customTypeGuard(T.self) }
             return value as! Self
         }
 
@@ -44,7 +44,7 @@ extension Lua {
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             vm.createFunction { args in
-                guard args.count > 0 else { throw Lua.MethodCallError() }
+                guard args.count > 0 else { throw Lua.Error.methodCall }
                 return try fn(Userdata.unwrap(self.vm, args[0]).toCustomType(), Array(args[1...]))
             }
         }
