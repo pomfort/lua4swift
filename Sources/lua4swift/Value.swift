@@ -14,7 +14,7 @@ public protocol SimpleUnwrapping: LuaValueRepresentable { }
 
 public extension SimpleUnwrapping {
     internal static func unwrap(_ value: LuaValueRepresentable) throws -> Self {
-        guard let v = value as? Self else { throw Lua.TypeGuardError(type: Self.typeName) }
+        guard let v = value as? Self else { throw Lua.Error.representableTypeGuard(Self.self) }
         return v
     }
 
@@ -24,15 +24,6 @@ public extension SimpleUnwrapping {
 }
 
 extension Lua {
-    public struct TypeGuardError: Swift.Error {
-        public let type: String
-        public init(type: String) {
-            self.type = type
-        }
-    }
-
-    public struct MethodCallError: Swift.Error { }
-
     open class StoredValue: Equatable {
         fileprivate let registryLocation: Int
         internal unowned var vm: State

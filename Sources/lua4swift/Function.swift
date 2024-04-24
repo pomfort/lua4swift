@@ -1,12 +1,11 @@
 import CLua
 
 extension Lua {
-    public struct Error: Swift.Error {
-        public let literal: String
-
-        internal init(_ e: String) {
-            self.literal = e
-        }
+    public enum Error: Swift.Error {
+        case `internal`(String)
+        case methodCall
+        case representableTypeGuard(LuaValueRepresentable.Type)
+        case customTypeGuard(LuaCustomTypeInstance.Type)
     }
 
     open class Function: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping {
@@ -58,8 +57,7 @@ extension Lua {
 
                 return values
             } else {
-                let err = vm.popError()
-                throw Lua.Error(err)
+                throw Lua.Error.internal(vm.popError())
             }
         }
     }
