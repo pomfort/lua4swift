@@ -227,8 +227,7 @@ public struct Lua {
                     values.forEach { $0.push(vm) }
                     return Int32(values.count)
                 } catch {
-                    let e = (error as? LocalizedError)?.errorDescription ?? "Swift Error \(error)"
-                    e.push(vm)
+                    error.localizedDescription.push(vm)
                     lua_error(vm.state)
                 }
             }
