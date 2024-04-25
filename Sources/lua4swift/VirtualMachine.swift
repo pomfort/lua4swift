@@ -259,8 +259,8 @@ public struct Lua {
             lib["__gc"] = createFunction { [weak self] args in
                 _ = self
                 let ud = try Userdata.unwrap(args[0])
-                if let gc {
-                    gc(ud.toCustomType())
+                if let gc, let ct: T = try? ud.toCustomType() {
+                    gc(ct)
                 }
                 (ud.userdataPointer() as UnsafeMutablePointer<T>).deinitialize(count: 1)
                 return []

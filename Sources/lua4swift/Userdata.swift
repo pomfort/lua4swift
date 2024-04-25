@@ -14,8 +14,14 @@ extension Lua {
             return (ptr?.assumingMemoryBound(to: T.self))!
         }
 
-        open func toCustomType<T: LuaCustomTypeInstance>() -> T {
-            return userdataPointer().pointee
+        open func toCustomType<T: LuaCustomTypeInstance>() throws -> T {
+            push(vm)
+            defer { vm.pop() }
+            guard luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil,
+                  let ptr = lua_touserdata(vm.state, -1) else {
+                throw Lua.Error.customTypeGuard(T.self)
+            }
+            return ptr.assumingMemoryBound(to: T.self).pointee
         }
 
         open func toAny() -> Any {
