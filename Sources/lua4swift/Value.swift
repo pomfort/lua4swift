@@ -26,7 +26,7 @@ public extension SimpleUnwrapping {
 extension Lua {
     open class StoredValue: Equatable {
         fileprivate let registryLocation: Int
-        internal unowned var vm: State
+        internal var vm: State
 
         internal init(_ vm: State) {
             self.vm = vm
