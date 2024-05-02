@@ -91,6 +91,11 @@ public struct Lua {
             return try eval(function: fn, args: args)
         }
 
+        public func eval(_ data: Data, args: [LuaValueRepresentable] = []) throws -> [LuaValueRepresentable] {
+            let fn = try state.createFunction(data)
+            return try eval(function: fn, args: args)
+        }
+
         public func eval(function f: Function, args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
             try self.state.eval(function: f, args: args)
         }
@@ -170,7 +175,7 @@ public struct Lua {
             return popValue(-1) as! Table
         }
 
-        fileprivate func createFunction(_ body: URL) throws -> Function {
+        public func createFunction(_ body: URL) throws -> Function {
             if luaL_loadfilex(state, body.path, nil) == LUA_OK {
                 return popValue(-1) as! Function
             } else {
@@ -178,11 +183,21 @@ public struct Lua {
             }
         }
 
-        fileprivate func createFunction(_ body: String) throws -> Function {
+        public func createFunction(_ body: String) throws -> Function {
             if luaL_loadstring(state, body.cString(using: .utf8)) == LUA_OK {
                 return popValue(-1) as! Function
             } else {
                 throw Lua.Error.internal(popError())
+            }
+        }
+
+        public func createFunction(_ body: Data) throws -> Function {
+            try body.withUnsafeBytes {
+                if luaL_loadbufferx(self.state, $0.baseAddress, $0.count, "binaryBlob", nil) == LUA_OK {
+                    return popValue(-1) as! Function
+                } else {
+                    throw Lua.Error.internal(popError())
+                }
             }
         }
 

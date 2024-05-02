@@ -162,4 +162,31 @@ class Lua_Tests: XCTestCase {
             end)
         """)
     }
+
+    func testFunctionDump() throws {
+        let add = try {
+            let vm = Lua.VirtualMachine()
+
+            let sub = vm.createFunction { [unowned vm] (args) -> Int64 in
+                _ = vm
+                let l = try Int64.unwrap(args[0])
+                let r = try Int64.unwrap(args[1])
+                return l-r
+            }
+            XCTAssertThrowsError(try sub.dump())
+
+            _ = try vm.eval("""
+                function add(a, b)
+                    return a+b
+                end
+            """)
+            let add = try XCTUnwrap(vm.env?["add"] as? Lua.Function)
+            return try XCTUnwrap(try? add.dump())
+        }()
+
+        let vm = Lua.VirtualMachine()
+        let r = try vm.eval(add, args: [5, 7])
+        let a = try XCTUnwrap(r[0] as? Int64)
+        XCTAssertEqual(a, 12)
+    }
 }
