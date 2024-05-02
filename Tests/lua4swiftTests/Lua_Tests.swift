@@ -42,7 +42,7 @@ class Lua_Tests: XCTestCase {
         }
     }
 
-    func testCustomType() {
+    func testCustomType() throws {
         class Note: LuaCustomTypeInstance {
             var name = ""
             static func luaTypeName() -> String {
@@ -78,7 +78,7 @@ class Lua_Tests: XCTestCase {
         // extract the note
         // and see if the name is the same
 
-        let myNote: Note = (vm.env?["myNote"] as! Lua.Userdata).toCustomType()
+        let myNote: Note = try (vm.env?["myNote"] as! Lua.Userdata).toCustomType()
         XCTAssert(myNote.name == "a custom note")
 
         // This is just to highlight changes in Swift
