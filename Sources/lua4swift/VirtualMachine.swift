@@ -106,10 +106,16 @@ public struct Lua {
     }
 
     public class State {
-        internal let state = luaL_newstate()
+        internal let state: UnsafeMutablePointer<lua_State>?
         weak internal var env: Table?
 
-        fileprivate init(openLibs: Bool) {
+        private init(state: UnsafeMutablePointer<lua_State>?, env: Table?) {
+            self.state = state
+            self.env = env
+        }
+
+        fileprivate convenience init(openLibs: Bool) {
+            self.init(state: luaL_newstate(), env: nil)
             if openLibs {
                 luaL_openlibs(state)
             }
@@ -226,8 +232,9 @@ public struct Lua {
         }
 
         internal func createFunction(_ fn: @escaping ([LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
-            let f: @convention(block) (OpaquePointer) -> Int32 = { [weak self] _ in
-                guard let vm = self else { return 0 }
+            let f: @convention(block) (OpaquePointer) -> Int32 = { [weak self] state in
+                _ = self
+                let vm = State(state: UnsafeMutablePointer<lua_State>(state), env: self?.env)
 
                 // build args list
                 var args = [LuaValueRepresentable]()
