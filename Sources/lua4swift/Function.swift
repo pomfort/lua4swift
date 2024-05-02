@@ -49,9 +49,6 @@ extension Lua {
         }
 
         internal func call(_ args: [LuaValueRepresentable]) throws -> [LuaValueRepresentable] {
-            defer {
-                luaC_fullgc(vm.state, 0)
-            }
             let debugTable = vm.globals["debug"] as! Lua.Table
             let messageHandler = debugTable["traceback"]
 
