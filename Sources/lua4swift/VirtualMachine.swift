@@ -4,14 +4,6 @@ import CLua
 internal let RegistryIndex = Int(-LUAI_MAXSTACK - 1000)
 private let GlobalsTable = Int(LUA_RIDX_GLOBALS)
 
-private struct Future<T> {
-    private let af: () async throws -> T
-
-    init(_ af: @escaping () async throws -> T) {
-        self.af = af
-    }
-}
-
 public struct Lua {
     public class VirtualMachine {
         public let state: State
