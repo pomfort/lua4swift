@@ -7,11 +7,11 @@ public protocol LuaCustomTypeInstance {
 
 extension Lua {
     open class Userdata: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping, CustomStringConvertible {
-        open func userdataPointer<T>() -> UnsafeMutablePointer<T> {
+        open func userdataPointer<T>() -> UnsafeMutablePointer<T>? {
             push(vm)
             let ptr = lua_touserdata(vm.state, -1)
             vm.pop()
-            return (ptr?.assumingMemoryBound(to: T.self))!
+            return ptr.map { $0.assumingMemoryBound(to: T.self) }
         }
 
         open func toCustomType<T: LuaCustomTypeInstance>() throws -> T {
@@ -24,8 +24,8 @@ extension Lua {
             return ptr.assumingMemoryBound(to: T.self).pointee
         }
 
-        open func toAny() -> Any {
-            return userdataPointer().pointee
+        open func toAny() -> Any? {
+            return userdataPointer()?.pointee
         }
 
         fileprivate static func description(name: String) -> String { "Lua.CustomType<\(name)>" }

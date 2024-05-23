@@ -276,7 +276,9 @@ public struct Lua {
                 if let gc, let ct: T = try? ud.toCustomType() {
                     gc(ct)
                 }
-                (ud.userdataPointer() as UnsafeMutablePointer<T>).deinitialize(count: 1)
+                if let p: UnsafeMutablePointer<T> = ud.userdataPointer() {
+                    p.deinitialize(count: 1)
+                }
                 return []
             }
 
