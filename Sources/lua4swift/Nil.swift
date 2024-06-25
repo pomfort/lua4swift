@@ -1,7 +1,7 @@
 import CLua
 
 extension Lua {
-    public final class Nil: LuaValueRepresentable, Equatable, SimpleUnwrapping {
+    public final class Nil: LuaValueRepresentable, Equatable, SimpleUnwrapping, Sendable {
         public func push(_ vm: Lua.State) {
             lua_pushnil(vm.state)
         }
