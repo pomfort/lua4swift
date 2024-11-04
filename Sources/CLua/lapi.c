@@ -417,9 +417,9 @@ LUA_API const char *lua_tolstring (lua_State *L, int idx, size_t *len) {
     o = index2value(L, idx);  /* previous call may reallocate the stack */
   }
   if (len != NULL)
-    *len = vslen(o);
+    *len = tsslen(tsvalue(o));
   lua_unlock(L);
-  return svalue(o);
+  return getstr(tsvalue(o));
 }
 
 
@@ -1246,6 +1246,7 @@ LUA_API int lua_error (lua_State *L) {
   else
     luaG_errormsg(L);  /* raise a regular error */
   /* code unreachable; will unlock when control actually leaves the kernel */
+  return 0;  /* to avoid warnings */
 }
 
 
