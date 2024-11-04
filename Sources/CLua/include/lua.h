@@ -346,6 +346,7 @@ LUA_API int (lua_gc) (lua_State *L, int what, ...);
 ** miscellaneous functions
 */
 
+__attribute__((noreturn))
 LUA_API int   (lua_error) (lua_State *L);
 
 LUA_API int   (lua_next) (lua_State *L, int idx);
