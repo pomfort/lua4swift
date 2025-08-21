@@ -34,7 +34,21 @@ extension Lua {
         }
     }
 
-    open class LightUserdata: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping { }
+    final public class LightUserdata: LuaValueRepresentable, SimpleUnwrapping {
+        public let ptr: AnyObject
+
+        public init(ptr: AnyObject) {
+            self.ptr = ptr
+        }
+
+        init(_ raw: UnsafeMutableRawPointer!) {
+            self.ptr = Unmanaged<AnyObject>.fromOpaque(raw).takeRetainedValue()
+        }
+
+        public func push(_ vm: Lua.State) {
+            lua_pushlightuserdata(vm.state, Unmanaged.passRetained(self.ptr).toOpaque())
+        }
+    }
 
     open class CustomType<T: LuaCustomTypeInstance>: Table {
         public class func unwrap(_ vm: Lua.State, _ value: LuaValueRepresentable) throws -> Self {

@@ -133,6 +133,28 @@ class Lua_Tests: XCTestCase {
         XCTAssertEqual(LT.deinitCount, 2)
     }
 
+    func testLightLifetime() throws {
+        class O: NSObject { }
+        weak var weakObj: O? = nil
+        try {
+            var obj: O? = O()
+            weakObj = obj
+
+            let vm = Lua.VirtualMachine()
+            let fun = vm.createFunction { _ -> Lua.LightUserdata in
+                return Lua.LightUserdata(ptr: obj!)
+            }
+
+            vm.globals["fun"] = fun
+
+            let r = try vm.eval("return fun()")
+            let lu = try XCTUnwrap(r.first as? Lua.LightUserdata)
+            XCTAssertNotNil(lu.ptr as? O)
+            obj = nil
+        }()
+        XCTAssertNil(weakObj)
+    }
+
     func testSetEnv() throws {
         class T: LuaCustomTypeInstance {
             static func luaTypeName() -> String {

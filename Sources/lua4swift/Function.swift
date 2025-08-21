@@ -2,12 +2,64 @@ import Foundation
 import CLua
 
 extension Lua {
-    public enum Error: Swift.Error {
-        case `internal`(String)
-        case methodCall
-        case representableTypeGuard(LuaValueRepresentable.Type)
-        case customTypeGuard(LuaCustomTypeInstance.Type)
-        case notALuaFunction
+    public struct Error: CustomNSError {
+        public static let errorDomain: String = "lua4swift.Lua.Error"
+        public static let AuxDataKey = "lua4swift.Lua.Error.aux"
+        private static let ErrorCodeKey = "lua4swift.Lua.Error.code"
+
+        public let errorUserInfo: [String: Any]
+
+        public var errorCode: Int {
+            self.errorUserInfo[Self.ErrorCodeKey] as? Int ?? 0
+        }
+
+        public enum Code: Int {
+            case `nil` = 0
+            case `internal` = 1
+            case notALuaFunction = 2
+            case customTypeGuard = 3
+            case representableTypeGuard = 4
+            case methodCall = 5
+            case internalTyped = 6
+        }
+
+        private static func make(_ code: Code, aux: String? = nil) -> Self {
+            var userInfo: [String: Any] = [
+                Self.ErrorCodeKey: code.rawValue,
+            ]
+            if let aux {
+                userInfo[Self.AuxDataKey] = aux
+            }
+            return .init(errorUserInfo: userInfo)
+        }
+
+        static func `internal`(_ s: String) -> Self {
+            .make(.internal, aux: s)
+        }
+
+        static func internalTyped(_ s: String, _ t: LuaValueRepresentable.Type) -> Self {
+            .make(.internalTyped, aux: "(\(t.typeName)): \(s)")
+        }
+
+        static var notALuaFunction: Self {
+            .make(.notALuaFunction)
+        }
+
+        static var methodCall: Self {
+            .make(.methodCall)
+        }
+
+        static var `nil`: Self {
+            .make(.nil)
+        }
+
+        static func customTypeGuard(_ t: LuaCustomTypeInstance.Type) -> Self {
+            .make(.customTypeGuard, aux: t.luaTypeName())
+        }
+
+        static func representableTypeGuard(_ t: LuaValueRepresentable.Type) -> Self {
+            .make(.representableTypeGuard, aux: t.typeName)
+        }
     }
 
     open class Function: Lua.StoredValue, LuaValueRepresentable, SimpleUnwrapping {
@@ -76,7 +128,7 @@ extension Lua {
 
                 return values
             } else {
-                throw Lua.Error.internal(vm.popError())
+                throw vm.popError()
             }
         }
     }

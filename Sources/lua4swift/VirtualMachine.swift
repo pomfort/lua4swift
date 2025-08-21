@@ -157,7 +157,7 @@ public struct Lua {
             case LUA_TUSERDATA:
                 return Userdata(self)
             case LUA_TLIGHTUSERDATA:
-                return LightUserdata(self)
+                return LightUserdata(lua_touserdata(state, -1))
             case LUA_TTHREAD:
                 return Thread(self)
             case LUA_TNIL:
@@ -181,7 +181,7 @@ public struct Lua {
             if luaL_loadfilex(state, body.path, nil) == LUA_OK {
                 return popValue(-1) as! Function
             } else {
-                throw Lua.Error.internal(popError())
+                throw popError()
             }
         }
 
@@ -189,7 +189,7 @@ public struct Lua {
             if luaL_loadstring(state, body.cString(using: .utf8)) == LUA_OK {
                 return popValue(-1) as! Function
             } else {
-                throw Lua.Error.internal(popError())
+                throw popError()
             }
         }
 
@@ -198,7 +198,7 @@ public struct Lua {
                 if luaL_loadbufferx(self.state, $0.baseAddress, $0.count, "binaryBlob", nil) == LUA_OK {
                     return popValue(-1) as! Function
                 } else {
-                    throw Lua.Error.internal(popError())
+                    throw popError()
                 }
             }
         }
@@ -208,9 +208,17 @@ public struct Lua {
             return popValue(-1) as! Table
         }
 
-        internal func popError() -> String {
-            let err = popValue(-1) as! String
-            return err
+        internal func popError() -> Swift.Error {
+            guard let err = popValue(-1) else {
+                return Lua.Error.nil
+            }
+            if let s = err as? String {
+                return Lua.Error.internal(s)
+            } else if let ld = err as? LightUserdata,
+                      let e = ld.ptr as? NSError {
+                return e
+            }
+            return Lua.Error.internalTyped("\(err)", type(of: err))
         }
 
         fileprivate func createUserdata<T: LuaCustomTypeInstance>(_ o: T) -> Userdata {
@@ -245,7 +253,7 @@ public struct Lua {
                     values.forEach { $0.push(vm) }
                     return Int32(values.count)
                 } catch {
-                    error.localizedDescription.push(vm)
+                    LightUserdata(ptr: error as NSError).push(vm)
                     lua_error(vm.state)
                 }
             }
