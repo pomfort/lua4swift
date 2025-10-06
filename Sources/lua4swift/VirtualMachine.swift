@@ -208,8 +208,8 @@ public struct Lua {
             return popValue(-1) as! Table
         }
 
-        internal func popError() -> Swift.Error {
-            guard let err = popValue(-1) else {
+        public func unwrapError(_ value: LuaValueRepresentable?) -> Swift.Error {
+            guard let err = value else {
                 return Lua.Error.nil
             }
             if let s = err as? String {
@@ -219,6 +219,10 @@ public struct Lua {
                 return e
             }
             return Lua.Error.internalTyped("\(err)", type(of: err))
+        }
+
+        internal func popError() -> Swift.Error {
+            self.unwrapError(popValue(-1))
         }
 
         fileprivate func createUserdata<T: LuaCustomTypeInstance>(_ o: T) -> Userdata {
