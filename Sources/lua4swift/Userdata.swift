@@ -63,9 +63,10 @@ extension Lua {
         open var eq: ((T, T) -> Bool)?
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
-            vm.createFunction { args in
+            vm.createFunction { [weak vm = self.vm] args in
+                guard let vm else { throw Lua.Error.nil }
                 guard args.count > 0 else { throw Lua.Error.methodCall }
-                return try fn(Userdata.unwrap(self.vm, args[0]).toCustomType(), Array(args[1...]))
+                return try fn(Userdata.unwrap(vm, args[0]).toCustomType(), Array(args[1...]))
             }
         }
 
