@@ -133,6 +133,13 @@ public struct Lua {
             lua_settop(state, -(2)-1)
         }
 
+        public func getCurrentLine() -> Int32 {
+            var ar = lua_Debug()
+            lua_getstack(self.state, 1, &ar);
+            lua_getinfo(self.state, "nSl", &ar);
+            return ar.currentline
+        }
+
         // pops the value off the stack completely and returns it
         internal func popValue(_ pos: Int) -> LuaValueRepresentable? {
             moveToStackTop(pos)
