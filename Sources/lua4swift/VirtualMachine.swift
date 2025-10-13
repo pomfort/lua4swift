@@ -222,7 +222,7 @@ public struct Lua {
             if let s = err as? String {
                 return Lua.Error.internal(s)
             } else if let ld = err as? LightUserdata,
-                      let e = ld.ptr as? NSError {
+                      let e = ld.takeRetainedValue() as? NSError {
                 return e
             }
             return Lua.Error.internalTyped("\(err)", type(of: err))

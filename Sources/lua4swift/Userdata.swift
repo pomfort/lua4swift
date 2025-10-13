@@ -35,18 +35,23 @@ extension Lua {
     }
 
     final public class LightUserdata: LuaValueRepresentable, SimpleUnwrapping {
-        public let ptr: AnyObject
+        public let ptr: UnsafeMutableRawPointer?
 
         public init(ptr: AnyObject) {
-            self.ptr = ptr
+            self.ptr = Unmanaged.passRetained(ptr).toOpaque()
         }
 
-        init(_ raw: UnsafeMutableRawPointer!) {
-            self.ptr = Unmanaged<AnyObject>.fromOpaque(raw).takeRetainedValue()
+        init(_ raw: UnsafeMutableRawPointer?) {
+            self.ptr = raw
         }
 
         public func push(_ vm: Lua.State) {
-            lua_pushlightuserdata(vm.state, Unmanaged.passRetained(self.ptr).toOpaque())
+            lua_pushlightuserdata(vm.state, self.ptr)
+        }
+
+        internal func takeRetainedValue() -> AnyObject? {
+            guard let ptr else { return nil }
+            return Unmanaged<AnyObject>.fromOpaque(ptr).takeRetainedValue()
         }
     }
 

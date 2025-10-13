@@ -120,12 +120,24 @@ static void lsys_unloadlib (void *lib) {
   dlclose(lib);
 }
 
+static void *_lsys_load (lua_State *L, const char *path, int seeglb) {
+    void *lib = dlopen(path, RTLD_NOW | (seeglb ? RTLD_GLOBAL : RTLD_LOCAL));
+    if (l_unlikely(lib == NULL))
+        lua_pushstring(L, dlerror());
+    return lib;
+}
+
 
 static void *lsys_load (lua_State *L, const char *path, int seeglb) {
-  void *lib = dlopen(path, RTLD_NOW | (seeglb ? RTLD_GLOBAL : RTLD_LOCAL));
-  if (l_unlikely(lib == NULL))
-    lua_pushstring(L, dlerror());
-  return lib;
+  lua_pushstring(L, "lua.allow.lsys_load");
+  lua_gettable(L, LUA_REGISTRYINDEX);
+  if (!lua_isboolean(L, -1) || !lua_toboolean(L, -1)) {
+    lua_pushliteral(L, "dynamic libraries not enabled; check your license");
+    return NULL;
+  }
+  lua_pop(L, 1);
+
+  return _lsys_load(L, path, seeglb);
 }
 
 
