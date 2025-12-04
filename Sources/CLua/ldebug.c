@@ -99,6 +99,10 @@ static int getcurrentline (CallInfo *ci) {
   return luaG_getfuncline(ci_func(ci)->p, currentpc(ci));
 }
 
+int lua_swift_getcurrentline (CallInfo *ci) {
+  return getcurrentline(ci);
+}
+
 
 /*
 ** Set 'trap' for all active Lua frames.

@@ -41,6 +41,39 @@ public struct Lua {
             self.state.registry
         }
 
+        public struct Hooks: OptionSet, ExpressibleByIntegerLiteral {
+            public let rawValue: Int32
+            public init(rawValue: Int32) {
+                self.rawValue = rawValue
+            }
+            public init(integerLiteral: Int32) {
+                self.init(rawValue: integerLiteral)
+            }
+
+            public static let call: Self = 1
+            public static let ret: Self = 2
+            public static let line: Self = 4
+            public static let count: Self = 8
+        }
+
+        public func setHook(for hook: Hooks, count: Int32?, _ fx: @escaping (Int32) throws -> Void) {
+            assert(hook.contains(.count) == (count != nil))
+            let f: @convention(block) (UnsafeMutablePointer<lua_State>?, UnsafeMutablePointer<lua_Debug>?) -> Void = { state, _ in // do not use second arg, not supported by convention(block)!
+                let currentline = lua_swift_getcurrentline(state?.pointee.ci)
+                do {
+                    try fx(currentline)
+                } catch {
+                    lua_pushlightuserdata(state, LightUserdata(ptr: error as NSError).ptr)
+                    lua_error(state)
+                }
+            }
+            let block: AnyObject = unsafeBitCast(f, to: AnyObject.self)
+            let imp = imp_implementationWithBlock(block)
+            let fp = unsafeBitCast(imp, to: lua_Hook.self)
+
+            lua_sethook(self.state.state, fp, hook.rawValue, count ?? 0)
+        }
+
         public func createFunction(_ s: String) throws -> Function {
             try self.state.createFunction(s)
         }
@@ -351,6 +384,5 @@ public struct Lua {
         internal func stackSize() -> Int {
             return Int(lua_gettop(state))
         }
-
     }
 }
