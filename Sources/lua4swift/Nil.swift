@@ -1,12 +1,12 @@
 import CLua
 
 extension Lua {
-    public final class Nil: LuaValueRepresentable, Equatable, SimpleUnwrapping, Sendable {
+    public final class Nil: LuaValueRepresentable, Equatable, SimpleUnwrapping, Sendable, CustomStringConvertible {
         public func push(_ vm: Lua.State) {
             lua_pushnil(vm.state)
         }
 
-        public static func ==(_: Nil, _: Nil) -> Bool {
+        public static func == (_: Nil, _: Nil) -> Bool {
             true
         }
 
