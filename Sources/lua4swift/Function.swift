@@ -5,6 +5,7 @@ extension Lua {
     public class Error: NSError, @unchecked Sendable {
         public static let errorDomain: String = "lua4swift.Lua.Error"
         public static let AuxDataKey = "lua4swift.Lua.Error.aux"
+        public static let LineKey = "lua4swift.Lua.Error.line"
 
         public var errorCode: Code {
             .init(rawValue: self.code) ?? .nil
@@ -24,40 +25,42 @@ extension Lua {
             case internalTyped = 6
         }
 
-        private static func make(_ code: Code, aux: String? = nil) -> Error {
-            var userInfo: [String: Any] = [:]
+        private static func make(_ code: Code, line: Int, aux: String? = nil) -> Error {
+            var userInfo: [String: Any] = [
+                Self.LineKey: line,
+            ]
             if let aux {
                 userInfo[Self.AuxDataKey] = aux
             }
             return Error(domain: Self.errorDomain, code: code.rawValue, userInfo: userInfo)
         }
 
-        static func `internal`(_ s: String) -> Error {
-            .make(.internal, aux: s)
+        static func `internal`(_ line: Int, _ s: String) -> Error {
+            .make(.internal, line: line, aux: s)
         }
 
-        static func internalTyped(_ s: String, _ t: LuaValueRepresentable.Type) -> Error {
-            .make(.internalTyped, aux: "(\(t.typeName)): \(s)")
+        static func internalTyped(_ line: Int, _ s: String, _ t: LuaValueRepresentable.Type) -> Error {
+            .make(.internalTyped, line: line, aux: "(\(t.typeName)): \(s)")
         }
 
         static var notALuaFunction: Error {
-            .make(.notALuaFunction)
+            .make(.notALuaFunction, line: 0)
         }
 
-        static var methodCall: Error {
-            .make(.methodCall)
+        static func methodCall(_ line: Int) -> Error {
+            .make(.methodCall, line: line)
         }
 
-        static var `nil`: Error {
-            .make(.nil)
+        static func `nil`(_ line: Int) -> Error {
+            .make(.nil, line: line)
         }
 
-        static func customTypeGuard(_ t: LuaCustomTypeInstance.Type) -> Error {
-            .make(.customTypeGuard, aux: t.luaTypeName())
+        static func customTypeGuard(_ line: Int, _ t: LuaCustomTypeInstance.Type) -> Error {
+            .make(.customTypeGuard, line: line, aux: t.luaTypeName())
         }
 
-        static func representableTypeGuard(_ t: LuaValueRepresentable.Type) -> Error {
-            .make(.representableTypeGuard, aux: t.typeName)
+        static func representableTypeGuard(_ line: Int, _ t: LuaValueRepresentable.Type) -> Error {
+            .make(.representableTypeGuard, line: line, aux: t.typeName)
         }
     }
 

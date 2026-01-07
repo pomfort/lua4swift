@@ -19,7 +19,7 @@ extension Lua {
             defer { vm.pop() }
             guard luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil,
                   let ptr = lua_touserdata(vm.state, -1) else {
-                throw Lua.Error.customTypeGuard(T.self)
+                throw Lua.Error.customTypeGuard(vm.getCurrentLine(), T.self)
             }
             return ptr.assumingMemoryBound(to: T.self).pointee
         }
@@ -60,7 +60,7 @@ extension Lua {
             value.push(vm)
             let isLegit = luaL_testudata(vm.state, -1, T.luaTypeName().cString(using: .utf8)) != nil
             vm.pop()
-            guard isLegit else { throw Lua.Error.customTypeGuard(T.self) }
+            guard isLegit else { throw Lua.Error.customTypeGuard(vm.getCurrentLine(), T.self) }
             return value as! Self
         }
 
@@ -69,8 +69,8 @@ extension Lua {
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             vm.createFunction { [weak vm = self.vm] args in
-                guard let vm else { throw Lua.Error.nil }
-                guard args.count > 0 else { throw Lua.Error.methodCall }
+                guard let vm else { throw Lua.Error.nil(0) }
+                guard args.count > 0 else { throw Lua.Error.methodCall(vm.getCurrentLine()) }
                 return try fn(Userdata.unwrap(vm, args[0]).toCustomType(), Array(args[1...]))
             }
         }

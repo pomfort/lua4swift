@@ -166,11 +166,11 @@ public struct Lua {
             lua_settop(state, -(2)-1)
         }
 
-        public func getCurrentLine() -> Int32 {
+        public func getCurrentLine() -> Int {
             var ar = lua_Debug()
             lua_getstack(self.state, 1, &ar);
             lua_getinfo(self.state, "nSl", &ar);
-            return ar.currentline
+            return Int(ar.currentline)
         }
 
         // pops the value off the stack completely and returns it
@@ -250,15 +250,15 @@ public struct Lua {
 
         public func unwrapError(_ value: LuaValueRepresentable?) -> Swift.Error {
             guard let err = value else {
-                return Lua.Error.nil
+                return Lua.Error.nil(self.getCurrentLine())
             }
             if let s = err as? String {
-                return Lua.Error.internal(s)
+                return Lua.Error.internal(self.getCurrentLine(), s)
             } else if let ld = err as? LightUserdata,
                       let e = ld.takeRetainedValue() as? NSError {
                 return e
             }
-            return Lua.Error.internalTyped("\(err)", type(of: err))
+            return Lua.Error.internalTyped(self.getCurrentLine(), "\(err)", type(of: err))
         }
 
         internal func popError() -> Swift.Error {
@@ -327,8 +327,8 @@ public struct Lua {
 
             let gc = lib.gc
             lib["__gc"] = createFunction { [weak self] args in
-                _ = self
-                let ud = try Userdata.unwrap(args[0])
+                guard let self else { throw Error.nil(0) }
+                let ud = try Userdata.unwrap(self, args[0])
                 if let gc, let ct: T = try? ud.toCustomType() {
                     gc(ct)
                 }

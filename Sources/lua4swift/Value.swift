@@ -13,13 +13,9 @@ extension LuaValueRepresentable {
 public protocol SimpleUnwrapping: LuaValueRepresentable { }
 
 public extension SimpleUnwrapping {
-    internal static func unwrap(_ value: LuaValueRepresentable) throws -> Self {
-        guard let v = value as? Self else { throw Lua.Error.representableTypeGuard(Self.self) }
+    static func unwrap(_ state: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
+        guard let v = value as? Self else { throw Lua.Error.representableTypeGuard(state.getCurrentLine(), Self.self) }
         return v
-    }
-
-    static func unwrap(_: Lua.State, _ value: LuaValueRepresentable) throws -> Self {
-        try self.unwrap(value)
     }
 }
 
