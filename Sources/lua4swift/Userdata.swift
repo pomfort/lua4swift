@@ -69,7 +69,7 @@ extension Lua {
 
         public func createMethod(_ fn: @escaping (T, [LuaValueRepresentable]) throws -> [LuaValueRepresentable]) -> Function {
             vm.createFunction { [weak vm = self.vm] args in
-                guard let vm else { throw Lua.Error.nil(0) }
+                guard let vm else { throw Lua.Error.nil }
                 guard args.count > 0 else { throw Lua.Error.methodCall(vm.getCurrentLine()) }
                 return try fn(Userdata.unwrap(vm, args[0]).toCustomType(), Array(args[1...]))
             }

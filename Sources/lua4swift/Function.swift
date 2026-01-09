@@ -25,34 +25,35 @@ extension Lua {
             case internalTyped = 6
         }
 
-        private static func make(_ code: Code, line: Int, aux: String? = nil) -> Error {
-            var userInfo: [String: Any] = [
-                Self.LineKey: line,
-            ]
+        private static func make(_ code: Code, line: Int?, aux: String? = nil) -> Error {
+            var userInfo: [String: Any] = [:]
             if let aux {
                 userInfo[Self.AuxDataKey] = aux
+            }
+            if let line {
+                userInfo[Self.LineKey] = line
             }
             return Error(domain: Self.errorDomain, code: code.rawValue, userInfo: userInfo)
         }
 
-        static func `internal`(_ line: Int, _ s: String) -> Error {
-            .make(.internal, line: line, aux: s)
+        static func `internal`(_ s: String) -> Error {
+            .make(.internal, line: nil, aux: s)
         }
 
-        static func internalTyped(_ line: Int, _ s: String, _ t: LuaValueRepresentable.Type) -> Error {
-            .make(.internalTyped, line: line, aux: "(\(t.typeName)): \(s)")
+        static func internalTyped(_ s: String, _ t: LuaValueRepresentable.Type) -> Error {
+            .make(.internalTyped, line: nil, aux: "(\(t.typeName)): \(s)")
         }
 
         static var notALuaFunction: Error {
-            .make(.notALuaFunction, line: 0)
+            .make(.notALuaFunction, line: nil)
         }
 
         static func methodCall(_ line: Int) -> Error {
             .make(.methodCall, line: line)
         }
 
-        static func `nil`(_ line: Int) -> Error {
-            .make(.nil, line: line)
+        static var `nil`: Error {
+            .make(.nil, line: nil)
         }
 
         static func customTypeGuard(_ line: Int, _ t: LuaCustomTypeInstance.Type) -> Error {

@@ -250,15 +250,15 @@ public struct Lua {
 
         public func unwrapError(_ value: LuaValueRepresentable?) -> Swift.Error {
             guard let err = value else {
-                return Lua.Error.nil(self.getCurrentLine())
+                return Lua.Error.nil
             }
             if let s = err as? String {
-                return Lua.Error.internal(self.getCurrentLine(), s)
+                return Lua.Error.internal(s)
             } else if let ld = err as? LightUserdata,
                       let e = ld.takeRetainedValue() as? NSError {
                 return e
             }
-            return Lua.Error.internalTyped(self.getCurrentLine(), "\(err)", type(of: err))
+            return Lua.Error.internalTyped("\(err)", type(of: err))
         }
 
         internal func popError() -> Swift.Error {
@@ -327,7 +327,7 @@ public struct Lua {
 
             let gc = lib.gc
             lib["__gc"] = createFunction { [weak self] args in
-                guard let self else { throw Error.nil(0) }
+                guard let self else { throw Error.nil }
                 let ud = try Userdata.unwrap(self, args[0])
                 if let gc, let ct: T = try? ud.toCustomType() {
                     gc(ct)
