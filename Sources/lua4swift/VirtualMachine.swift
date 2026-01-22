@@ -169,6 +169,7 @@ public struct Lua {
         public func getCurrentLine() -> Int {
             var ar = lua_Debug()
             lua_getstack(self.state, 1, &ar);
+            guard ar.i_ci != nil else { return 0 }
             lua_getinfo(self.state, "nSl", &ar);
             return Int(ar.currentline)
         }
