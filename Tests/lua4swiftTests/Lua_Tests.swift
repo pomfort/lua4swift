@@ -149,7 +149,7 @@ class Lua_Tests: XCTestCase {
 
             let r = try vm.eval("return fun()")
             let lu = try XCTUnwrap(r.first as? Lua.LightUserdata)
-            XCTAssertNotNil(lu.ptr as? O)
+            XCTAssertNotNil(lu.takeRetainedValue() as? O)
             obj = nil
         }()
         XCTAssertNil(weakObj)

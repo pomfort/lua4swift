@@ -87,19 +87,21 @@ extension Lua {
             self.push(self.vm)
             defer { self.vm.pop() }
 
+            if lua_iscfunction(self.vm.state, -1) != 0 {
+                throw Error.notALuaFunction
+            }
+
             var data = Data()
             let r = withUnsafeMutablePointer(to: &data) {
                 lua_dump(self.vm.state, { _, p, sz, d in
+                    guard sz > 0 else { return 0 }
                     guard let d, let p else { fatalError("invalid dump data") }
                     d.bindMemory(to: Data.self, capacity: 1).pointee
                         .append(p.assumingMemoryBound(to: UInt8.self), count: sz)
                     return 0
                 }, $0, strip ? 1 : 0)
             }
-            guard r == 0 else {
-                assert(r == 1)
-                throw Error.notALuaFunction
-            }
+            assert(r == 0)
             return data
         }
 
