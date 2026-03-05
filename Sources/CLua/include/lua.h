@@ -43,6 +43,7 @@
 #define LUA_REGISTRYINDEX	(-(INT_MAX/2 + 1000))
 #define lua_upvalueindex(i)	(LUA_REGISTRYINDEX - (i))
 
+static const int LUA_SWIFT_REGISTRYINDEX = LUA_REGISTRYINDEX;
 
 /* thread status */
 #define LUA_OK		0

@@ -1,7 +1,7 @@
 import Foundation
 import CLua
 
-internal let RegistryIndex = Int(-LUAI_MAXSTACK - 1000)
+internal let RegistryIndex = Int(LUA_SWIFT_REGISTRYINDEX)
 private let GlobalsTable = Int(LUA_RIDX_GLOBALS)
 
 public struct Lua {
@@ -146,7 +146,7 @@ public struct Lua {
         fileprivate convenience init(openLibs: Bool) {
             self.init(state: luaL_newstate(), env: nil)
             if openLibs {
-                luaL_openlibs(state)
+                luaL_openselectedlibs(state, ~0, 0)
             }
         }
 
