@@ -164,14 +164,13 @@ class Lua_Tests: XCTestCase {
 
         let vm = Lua.VirtualMachine()
         let lib: Lua.CustomType<T> = vm.createCustomType { t in
-            t["callback"] = t.createMethod { (self, args) -> Void in
-                let fx = try Lua.Function.unwrap(args[0])
+            t["callback"] = t.createMethod { [unowned vm] (self, args) -> Void in
+                let fx = try Lua.Function.unwrap(vm.state, args[0])
                 _ = try fx.call([])
             }
         }
 
         lib["new"] = vm.createFunction { [unowned vm] _ in
-            _ = vm
             let l = T()
             return vm.createUserdata(l)
         }
@@ -190,9 +189,8 @@ class Lua_Tests: XCTestCase {
             let vm = Lua.VirtualMachine()
 
             let sub = vm.createFunction { [unowned vm] (args) -> Int64 in
-                _ = vm
-                let l = try Int64.unwrap(args[0])
-                let r = try Int64.unwrap(args[1])
+                let l = try Int64.unwrap(vm.state, args[0])
+                let r = try Int64.unwrap(vm.state, args[1])
                 return l-r
             }
             XCTAssertThrowsError(try sub.dump())
