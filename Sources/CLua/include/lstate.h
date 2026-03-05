@@ -446,7 +446,7 @@ LUAI_FUNC void luaE_warning (lua_State *L, const char *msg, int tocont);
 LUAI_FUNC void luaE_warnerror (lua_State *L, const char *where);
 LUAI_FUNC TStatus luaE_resetthread (lua_State *L, TStatus status);
 
-LUAI_FUNC int lua_swift_getcurrentline (CallInfo *ci);
+LUA_API int lua_swift_getcurrentline (CallInfo *ci);
 
 #endif
 

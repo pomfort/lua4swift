@@ -359,6 +359,7 @@ LUA_API void (lua_warning)  (lua_State *L, const char *msg, int tocont);
 
 
 LUA_API int (lua_gc) (lua_State *L, int what, ...);
+LUA_API int (lua_swift_gc_gccollect) (lua_State *L);
 
 
 /*

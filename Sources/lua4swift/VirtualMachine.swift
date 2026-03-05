@@ -26,7 +26,7 @@ public struct Lua {
 
         deinit {
             self.env = nil
-            luaC_fullgc(self.state.state, 0)
+            lua_swift_gc_gccollect(self.state.state)
         }
 
         public func preloadModules(_ modules: UnsafeMutablePointer<luaL_Reg>) {

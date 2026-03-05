@@ -1242,7 +1242,9 @@ LUA_API int lua_gc (lua_State *L, int what, ...) {
   return res;
 }
 
-
+LUA_API int lua_swift_gc_gccollect (lua_State *L) {
+  return lua_gc(L, LUA_GCCOLLECT);
+}
 
 /*
 ** miscellaneous functions
